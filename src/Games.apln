@@ -24,6 +24,6 @@
     Human←{⎕←Show ⍵ ⋄ x←⎕C(' '≠x)/x←⍞ ⋄ x≡,'q':¯1 ⋄ s←Sq x ⋄ s∊⍸eng.Moves 1⊃⍵:s ⋄ ⎕←'Illegal move' ⋄ ∇⍵} ⍝ agent: ask at the keyboard; q quits
     Result←{(c b)←⍵ ⋄ (¯1*c)×eng.Score b} ⍝ Black's WTHOR margin of finished game ⍵
 
-    _AB←{1⊃(eng.Wide ⍺⍺)eng.Search 1⊃⍵} ⍝ agent: alpha-beta to depth ⍺⍺
+    _AB←{1⊃(⍺⍺ ¯1e6 1e6)eng.Search 1⊃⍵} ⍝ agent: alpha-beta to depth ⍺⍺
     _TH←{⊃⍺⍺ eng.Think 1⊃⍵} ⍝ agent: iterative deepening within limits ⍺⍺ ≡ ms [depth [nodes]]
 :EndNamespace

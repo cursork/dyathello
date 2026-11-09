@@ -46,7 +46,6 @@
         f←0=a+t ⋄ (f/v)←100×Score f⌿⍵                       ⍝ finished: exact
         v
     }
-    Wide←{⍵,inf×¯1 1} ⍝ depth ⍵ with the full alpha-beta window
     New←{ ⍝ empty transposition table with 2*⍵ slots, plus the search's limits, counters and configuration
         s←2*⍵
         (size:s ⋄ key:s⍴¯1 ⋄ val:s⍴0 ⋄ dep:s⍴¯1 ⋄ bnd:s⍴0 ⋄ mv:s⍴¯1   ⍝ slots; per slot key (¯1 empty), value, depth, bound (0 exact 1 lower 2 upper), move
@@ -54,8 +53,8 @@
          ord:1 ⋄ tt:1)                                  ⍝ switches: move ordering, table use
     }
     Search←{ ⍝ ⍺ ≡ depth alpha beta [table]; fail-soft negamax of board ⍵ → value, best square (¯1 if none chosen)
-        (d a z)←3↑⍺ ⋄ tab←3{⍺=≢⍵:(n:0) ⋄ ⍺⊃⍵}⍺                        ⍝ no table: a namespace that only counts nodes
-        (tt ord dl mx)←tab⎕VGET('tt' 0)('ord' 1)('dl'(⌊/⍬))('mx' 0)
+        (d a z)←3↑⍺ ⋄ tab←3{⍺<≢⍵:⍺⊃⍵ ⋄ (n:0 ⋄ tt:0 ⋄ ord:1 ⋄ dl:⌊/⍬ ⋄ mx:0)}⍺   ⍝ no table: count nodes, order moves, no limits
+        (tt ord dl mx)←tab.(tt ord dl mx)
         (⎕AI[2]≥dl)∨(mx>0)∧tab.n≥mx:⎕SIGNAL 999                      ⍝ out of time or nodes: abandon (nothing stored)
         tab.n+←1
         s←⍸Moves ⍵
@@ -67,8 +66,15 @@
         c←s Play(≢s)2 64⍴⍵
         v←-Eval _Leaf c ⋄ tab.n+←≢c                                     ⍝ nodes: Search calls plus boards scored
         o←{ord:⍵ ⋄ ⍳≢s}⍒v ⋄ o←o[⍋h≠s[o]]                ⍝ table move first (stable grade), then static value
-        L←{(i b m a)←⍵ ⋄ i=≢o:b m ⋄ x←-⊃(tab,⍨(d-1),-z a)Search c[o[i];;] ⋄ (b m)←(x>b)⊃(b m)(x,s[o[i]]) ⋄ a⌈←x ⋄ a≥z:b m ⋄ ∇(i+1)b m a}
-        r←{d=1:(⌈/v),s[⊃⍒v] ⋄ L 0(-inf)¯1 a}0
+        L←{(i b m a)←⍵                                  ⍝ children from o[i] on, with best value b, its square m, alpha a
+            i=≢o:b m
+            x←-⊃(tab,⍨(d-1),-z a)Search c[o[i];;]
+            (b m)←(x>b)⊃(b m)(x,s[o[i]])
+            a⌈←x
+            a≥z:b m                                     ⍝ beta cutoff
+            ∇(i+1)b m a
+        }
+        r←{d=1:(⌈/v),s[⊃⍒v] ⋄ L 0 ¯1e6 ¯1 a}0
         ~tt:r
         tab.key[i]←k ⋄ tab.val[i]←⊃r ⋄ tab.dep[i]←d ⋄ tab.mv[i]←1⊃r
         w←⊃r ⋄ tab.bnd[i]←(d>1)×(z≤w)+2×w≤a
@@ -83,14 +89,13 @@
         (ms n x th)←4↑⍺,(≢⍺)↓0 64 0 12
         tab←(New 20)⎕VSET('dl'(⎕AI[2]+ms))('mx'x) ⋄ b←⍵ ⋄ e←+/~∨⌿b
         ds←1+⍳n⌊e ⋄ ds←ds/⍨(e>th)∨(ds≤4)∨ds=e
-        X←{999::⍵ ⋄ (v s)←(tab,⍨e ¯1 1)Search b ⋄ w←s v e tab.n 1 0
-            999::w ⋄ (v s)←(tab,⍨e,¯1 1×1⌈inf×v×¯1 1)Search b ⋄ s v e tab.n 0 1}
-        G←{0=≢⍺:⍵ ⋄ d←⊃⍺ ⋄ d=e:X ⍵ ⋄ 999::⍵ ⋄ (v s)←(tab,⍨Wide d)Search b ⋄ (1↓⍺)∇ s v d tab.n(1<≢⍺)0}
+        X←{999::⍵ ⋄ (v s)←(e ¯1 1 tab)Search b ⋄ w←s v e tab.n 1 0
+            999::w ⋄ (v s)←(tab,⍨e,¯1 1×1⌈1e6×v×¯1 1)Search b ⋄ s v e tab.n 0 1}
+        G←{0=≢⍺:⍵ ⋄ d←⊃⍺ ⋄ d=e:X ⍵ ⋄ 999::⍵ ⋄ (v s)←(d ¯1e6 1e6 tab)Search b ⋄ (1↓⍺)∇ s v d tab.n(1<≢⍺)0}
         ds G(⊃⍸Moves b)(Eval b)0 0 2 0
     }
 
 ⍝ ─── Constants
-    inf←1e6
     dirs←[0 1 ⋄ 0 ¯1 ⋄ 1 0 ⋄ ¯1 0 ⋄ 1 1 ⋄ 1 ¯1 ⋄ ¯1 1 ⋄ ¯1 ¯1]        ⍝ directions (Δrank Δfile): E W N S NE NW SE SW
     rot←-dirs+.×8 1                                                        ⍝ rotation that shifts a square one step in each direction
     mask←∧/(⍳8)∊⍨(⍉8 8⊤⍳64)-⍤1⍤2 1⊢dirs                                    ⍝ squares a step can land on without wrapping

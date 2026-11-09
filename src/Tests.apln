@@ -27,7 +27,7 @@
     BenchPos←{⊃,/{((31+⍵)Positions 1)[20 30]}¨⍳3} ⍝ six fixed midgame positions
     Bench←{ ⍝ depths ⍵ → per depth: depth, total ms over BenchPos, sum of values (to spot behaviour changes)
         p←BenchPos 0
-        ↑{d←⍵ ⋄ t←⎕AI[2] ⋄ v←{⊃(eng.Wide d)eng.Search ⍵}¨p ⋄ d(⎕AI[2]-t)(+/v)}¨⍵
+        ↑{d←⍵ ⋄ t←⎕AI[2] ⋄ v←{⊃(d ¯1e6 1e6)eng.Search ⍵}¨p ⋄ d(⎕AI[2]-t)(+/v)}¨⍵
     }
     BenchID←{ ⍝ depths ⍵ → per depth: depth, total ms over BenchPos for iterative deepening to that depth, sum of values
         p←BenchPos 0
@@ -35,7 +35,7 @@
     }
     Nodes←{ ⍝ ⍺ ≡ ordering table (0/1 switches); ⍵ depth → nodes and ms for iterative deepening to ⍵ over the midgame corpus
         (o u)←⍺ ⋄ d←⍵ ⋄ t←⎕AI[2]
-        n←+/{tab←(eng.New 20)⎕VSET('ord'o)('tt'u) ⋄ b←⍵ ⋄ z←{(tab,⍨eng.Wide ⍵)eng.Search b}¨1+⍳d ⋄ tab.n}¨12↑Corp 0
+        n←+/{tab←(eng.New 20)⎕VSET('ord'o)('tt'u) ⋄ b←⍵ ⋄ z←{(⍵ ¯1e6 1e6 tab)eng.Search b}¨1+⍳d ⋄ tab.n}¨12↑Corp 0
         n(⎕AI[2]-t)
     }
     SlowDiff←{Diff 1729 Positions 100}
@@ -73,7 +73,7 @@
     TestDiff←{Diff 42 Positions 5}
     TestEnd←{ ⍝ a move that ends the game: c1 takes b1, 3–0 with 61 empties
         b←0 eng.Bd 1
-        ∧/(6400 2≡(eng.Wide 1)eng.Search b ⋄ 6400 2≡(eng.Wide 3)eng.Search b ⋄ eng.Terminal 2 eng.Play b)
+        ∧/(6400 2≡(1 ¯1e6 1e6)eng.Search b ⋄ 6400 2≡(3 ¯1e6 1e6)eng.Search b ⋄ eng.Terminal 2 eng.Play b)
     }
     TestEngine←{ ⍝ depth-2 alpha-beta beats a (seeded) random player from both colours
         ⎕RL←23 ⋄ r←?10 70⍴0
@@ -111,11 +111,11 @@
     }
     TestMinimax←{ ⍝ full-window Search ≡ plain minimax at depths 0–4, including a forced pass and a move that ends the game
         b←(13 Positions 2)[10×⍳4],(9 eng.Bd 0 2)(0 eng.Bd 1)
-        ∧/,(⍳5)∘.{(⍺ MM ⍵)=⊃(eng.Wide ⍺)eng.Search ⍵}b
+        ∧/,(⍳5)∘.{(⍺ MM ⍵)=⊃(⍺ ¯1e6 1e6)eng.Search ⍵}b
     }
     TestReference←{ ⍝ Eval and Search depths 1–3 match reference values from an independent implementation (refBoards, refValues in data.dcf)
         b←har.Data'refBoards'
-        v←(eng.Eval b),⍉↑{⊃¨(eng.Wide ⍵)∘eng.Search¨⊂[1 2]b}¨1 2 3
+        v←(eng.Eval b),⍉↑{⊃¨(⍵ ¯1e6 1e6)∘eng.Search¨⊂[1 2]b}¨1 2 3
         v≡har.Data'refValues'
     }
     TestPerft←{4 12 56 244 1396 8200 55092 390216≡(1+⍳8)eng.Perft¨⊂eng.start}
@@ -138,8 +138,8 @@
         forever←⌊/⍬ ⋄ g←{⍵/⍨6={+/~∨⌿⍵}¨⍵}{⍵/⍨{∨/eng.Moves ⍵}¨⍵}31 Positions 12 ⋄ s←{forever eng.Think ⍵}¨g
         b←⊃g/⍨0≠1⊃¨s ⋄ v←1⊃q←forever eng.Think b
         tab←eng.New 20 ⋄ w←⊃(tab,⍨6 ¯1 1)eng.Search b ⋄ k←tab.n            ⍝ win/draw/loss into tab
-        cold←eng.New 20 ⋄ c←⊃(cold,⍨eng.Wide 6)eng.Search b
-        r←⊃(tab,⍨6,¯1 1×1⌈eng.inf×w×¯1 1)eng.Search b                     ⍝ exact, reusing tab's bounds
+        cold←eng.New 20 ⋄ c←⊃(6 ¯1e6 1e6 cold)eng.Search b
+        r←⊃(tab,⍨6,¯1 1×1⌈1e6×w×¯1 1)eng.Search b                     ⍝ exact, reusing tab's bounds
         p←forever 64(⌊2÷⍨3⊃q)eng.Think b                                  ⍝ half the nodes of the full solve
         ∧/(
             ∧/{0 1≡⍵[4 5]}¨s                     ⍝ complete and solved
@@ -166,8 +166,8 @@
         )
     }
     TestTT←{ ⍝ the table never changes a value: cold, warm, deep-then-shallow, and a 1-slot table where every key collides
-        ∧/{b←⍵ ⋄ v←{⊃(eng.Wide ⍵)eng.Search b}¨4 3 4 ⋄ tab←eng.New 16 ⋄ one←eng.New 0
-            ∧/(v≡{⊃(tab,⍨eng.Wide ⍵)eng.Search b}¨4 3 4 ⋄ v≡{⊃(one,⍨eng.Wide ⍵)eng.Search b}¨4 3 4)}¨(11 Positions 2)[15×⍳4]
+        ∧/{b←⍵ ⋄ v←{⊃(⍵ ¯1e6 1e6)eng.Search b}¨4 3 4 ⋄ tab←eng.New 16 ⋄ one←eng.New 0
+            ∧/(v≡{⊃(⍵ ¯1e6 1e6 tab)eng.Search b}¨4 3 4 ⋄ v≡{⊃(⍵ ¯1e6 1e6 one)eng.Search b}¨4 3 4)}¨(11 Positions 2)[15×⍳4]
     }
     TestThink←{ ⍝ iterative deepening and its limits (solver off: threshold 0)
         p←(11 Positions 2)[15×⍳4] ⋄ b←⊃p ⋄ forever←⌊/⍬
@@ -175,7 +175,7 @@
         t←⎕AI[2] ⋄ s←50 eng.Think b ⋄ ms←⎕AI[2]-t
         e←⊃(11 Positions 1)[50] ⋄ x←forever 64 0 0 eng.Think e
         ∧/(
-            ∧/{(⊃(eng.Wide 4)eng.Search ⍵)=1⊃forever 4 0 0 eng.Think ⍵}¨p   ⍝ iterative deepening ≡ fixed depth
+            ∧/{(⊃(4 ¯1e6 1e6)eng.Search ⍵)=1⊃forever 4 0 0 eng.Think ⍵}¨p   ⍝ iterative deepening ≡ fixed depth
             ((⊃⍸eng.Moves b),(eng.Eval b),0 0 2 0)≡0 eng.Think b             ⍝ time 0: fallback
             ≡/r ⋄ (4⊃⊃r)∊1 2 ⋄ (⊃⊃r)∊⍸eng.Moves b                    ⍝ node limit: repeatable, partial or fallback, legal
             ms≤100 ⋄ (⊃s)∊⍸eng.Moves b                               ⍝ 50 ms: on time, legal
@@ -184,7 +184,7 @@
     }
     TestWindow←{ ⍝ fail-soft: a result ≤α is an upper bound, ≥β a lower bound, otherwise exact; depth 1 is always exact
         ws←[¯300 ¯50 ⋄ ¯50 50 ⋄ 50 300 ⋄ ¯1 1 ⋄ ¯300 300 ⋄ 10 20 ⋄ ¯20 ¯10]   ⍝ windows around the true value t
-        ∧/∊{b←⍵ ⋄ ∊1 3∘.{t←⊃(eng.Wide ⍺)eng.Search b ⋄ (a z)←t+⍵ ⋄ r←⊃(⍺ a z)eng.Search b
+        ∧/∊{b←⍵ ⋄ ∊1 3∘.{t←⊃(⍺ ¯1e6 1e6)eng.Search b ⋄ (a z)←t+⍵ ⋄ r←⊃(⍺ a z)eng.Search b
             ∧/(r≤a)(z≤r)((a<r)∧r<z)(⍺=1)≤(t≤r)(r≤t)(r=t)(r=t)}↓ws}¨(17 Positions 2)[8×⍳6]  ⍝ p≤q: p implies q
     }
 :EndNamespace
