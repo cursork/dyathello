@@ -7,8 +7,8 @@
     Sides←0 1(⌷⍤0 2)¨⊂ ⍝ boards (…,2,64) → mine theirs, each (…,64)
     S←{(mask⍴⍨⍴⍵)∧(rot⍴⍨¯1↓⍴⍵)⌽⍵} ⍝ shift each (…,8,64) direction row one step; edges fall off
     Run←{o←8 64∘⍴⍤1⊢⍺ ⋄ {⍵∨o∧S ⍵}⍣≡o∧S 8 64∘⍴⍤1⊢⍵} ⍝ (…,8,64): per direction, contiguous discs ⍺ reached from ⍵ (a dfn step: the train (⊢∨o∧S) measured 20% slower on small batches)
-    Moves←{m o←Sides ⍵ ⋄ (~m∨o)∧∨⌿⍤2⊢S o Run m} ⍝ legal moves for each board (…,2,64)
-    Flips←{m o←Sides ⍵ ⋄ x←o Run ⍺∘.=⍳64 ⋄ ∨⌿⍤2⊢x∧⍤1 0∨/(8 64∘⍴⍤1⊢m)∧S x} ⍝ discs flipped by playing squares ⍺ on boards ⍵
+    Moves←{(m o)←Sides ⍵ ⋄ (~m∨o)∧∨⌿⍤2⊢S o Run m} ⍝ legal moves for each board (…,2,64)
+    Flips←{(m o)←Sides ⍵ ⋄ x←o Run ⍺∘.=⍳64 ⋄ ∨⌿⍤2⊢x∧⍤1 0∨/(8 64∘⍴⍤1⊢m)∧S x} ⍝ discs flipped by playing squares ⍺ on boards ⍵
     Play←{f←⍺ Flips ⍵ ⋄ ⊖⍤2⊢⍵≠(f∨⍺∘.=⍳64),[¯0.5]⍤1⊢f} ⍝ play squares ⍺ on boards ⍵; results are from the opponent's view
     Terminal←{~∨/⍵∨⍥Moves⊖⍤2⊢⍵} ⍝ neither side can move, per board
     Score←{d+(×d)×64-+/c⊣d←-/c←+/⍵} ⍝ WTHOR disc difference: empties go to the winner
@@ -17,7 +17,7 @@
         ⍺=0:≢b
         m←Moves b
         ⍺=1:+/1⌈+/m
-        i s←↓0 64⊤⍸,m
+        (i s)←↓0 64⊤⍸,m
         p←⊖⍤2⊢b⌿⍨~∨/m
         t←~∨/Moves p
         (+/t)+(⍺-1)∇(s Play b[i;;])⍪p⌿⍨~t
@@ -28,8 +28,8 @@
     Div←(××⌊⍤|)÷ ⍝ integer division truncating toward zero
     Eval←{ ⍝ oracle evaluate in centidiscs (±6400) for each board (…,2,64): table, mobility, frontier, corner risk, blended by phase
         ⍝ ⍺ (optional): move counts of the side to move and of the opponent
-        ⍺←+/∘Moves¨⍵(⊖⍤2⊢⍵) ⋄ a t←⍺
-        m o←Sides ⍵ ⋄ e←~m∨o ⋄ d←m-o
+        ⍺←+/∘Moves¨⍵(⊖⍤2⊢⍵) ⋄ (a t)←⍺
+        (m o)←Sides ⍵ ⋄ e←~m∨o ⋄ d←m-o
         p←⌊48÷⍨1000×60-12⌈60⌊+/e
         B←{⍵[0]+1000 Div⍨p×-/⌽⍵}
         v←d+.×,weights
@@ -39,7 +39,7 @@
         6400⌊¯6400⌈v
     }
     _Leaf←{ ⍝ (E _Leaf) depth-0 value under evaluator E of each board in stack ⍵, as Search would give it: exact if finished, opponent's Eval negated after a forced pass
-        a t←+/∘Moves¨⍵(⊖⍤2⊢⍵)
+        (a t)←+/∘Moves¨⍵(⊖⍤2⊢⍵)
         v←(a t)⍺⍺ ⍵
         ~0∊a:v
         p←(a=0)∧t>0 ⋄ v[⍸p]←-(p∘/¨t a)⍺⍺⊖⍤2⊢p⌿⍵            ⍝ forced pass: the opponent's view, negated
@@ -54,20 +54,20 @@
          ord:1 ⋄ tt:1)                                  ⍝ oracle SearchConfig: move ordering, table use
     }
     Search←{ ⍝ ⍺ ≡ depth alpha beta [table]; fail-soft negamax of board ⍵ → value, best square (¯1 if none chosen)
-        d a z←3↑⍺ ⋄ tab←3{⍺=≢⍵:(n:0) ⋄ ⍺⊃⍵}⍺                        ⍝ no table: a namespace that only counts nodes
-        tt ord dl mx←tab⎕VGET('tt' 0)('ord' 1)('dl'(⌊/⍬))('mx' 0)
+        (d a z)←3↑⍺ ⋄ tab←3{⍺=≢⍵:(n:0) ⋄ ⍺⊃⍵}⍺                        ⍝ no table: a namespace that only counts nodes
+        (tt ord dl mx)←tab⎕VGET('tt' 0)('ord' 1)('dl'(⌊/⍬))('mx' 0)
         (⎕AI[2]≥dl)∨(mx>0)∧tab.n≥mx:⎕SIGNAL 999                      ⍝ out of time or nodes: abandon (nothing stored)
         tab.n+←1
         s←⍸Moves ⍵
         0=≢s:{∨/Moves⊖⍵:¯1,⍨-⊃(tab,⍨d,-z a)Search⊖⍵ ⋄ ¯1,⍨100×Score ⍵}⍵
         d=0:¯1,⍨Eval ⍵
-        k i e←{~tt:0 0 0 ⋄ k←Key ⍵ ⋄ i←tab.size|k ⋄ k i(tab.key[i]=k)}⍵
-        {~e:0 ⋄ tab.dep[i]≠d:0 ⋄ f x←tab.bnd[i],tab.val[i] ⋄ (f=⍳3)∨.∧1,(z≤x),x≤a}0:tab.val[i],tab.mv[i]
+        (k i e)←{~tt:0 0 0 ⋄ k←Key ⍵ ⋄ i←tab.size|k ⋄ k i(tab.key[i]=k)}⍵
+        {~e:0 ⋄ tab.dep[i]≠d:0 ⋄ (f x)←tab.bnd[i],tab.val[i] ⋄ (f=⍳3)∨.∧1,(z≤x),x≤a}0:tab.val[i],tab.mv[i]
         h←{~e:¯1 ⋄ tab.dep[i]≥d:tab.mv[i] ⋄ ¯1}0
         c←s Play(≢s)2 64⍴⍵
         v←-Eval _Leaf c ⋄ tab.n+←≢c                                     ⍝ nodes: Search calls plus boards scored
         o←{ord:⍵ ⋄ ⍳≢s}⍒v ⋄ o←o[⍋h≠s[o]]                ⍝ table move first (stable grade), then static value
-        L←{i b m a←⍵ ⋄ i=≢o:b m ⋄ x←-⊃(tab,⍨(d-1),-z a)Search c[o[i];;] ⋄ b m←(x>b)⊃(b m)(x,s[o[i]]) ⋄ a⌈←x ⋄ a≥z:b m ⋄ ∇(i+1)b m a}
+        L←{(i b m a)←⍵ ⋄ i=≢o:b m ⋄ x←-⊃(tab,⍨(d-1),-z a)Search c[o[i];;] ⋄ (b m)←(x>b)⊃(b m)(x,s[o[i]]) ⋄ a⌈←x ⋄ a≥z:b m ⋄ ∇(i+1)b m a}
         r←{d=1:(⌈/v),s[⊃⍒v] ⋄ L 0(-inf)¯1 a}0
         ~tt:r
         tab.key[i]←k ⋄ tab.val[i]←⊃r ⋄ tab.dep[i]←d ⋄ tab.mv[i]←1⊃r
@@ -80,12 +80,12 @@
         ⍝ Depth stops at the number of empties e: passes cost no depth, so that iteration sees only finished games and is
         ⍝ an exact solve (solved 1): win/draw/loss first, then the margin. At most threshold (default 12) empties, deepen
         ⍝ only to 4 before solving: enough for a sound move if the solve runs out of time.
-        ms n x th←4↑⍺,(≢⍺)↓0 64 0 12
+        (ms n x th)←4↑⍺,(≢⍺)↓0 64 0 12
         tab←(New 20)⎕VSET('dl'(⎕AI[2]+ms))('mx'x) ⋄ b←⍵ ⋄ e←+/~∨⌿b
         ds←1+⍳n⌊e ⋄ ds←ds/⍨(e>th)∨(ds≤4)∨ds=e
-        X←{999::⍵ ⋄ v s←(tab,⍨e ¯1 1)Search b ⋄ w←s v e tab.n 1 0
-            999::w ⋄ v s←(tab,⍨e,¯1 1×1⌈inf×v×¯1 1)Search b ⋄ s v e tab.n 0 1}
-        G←{0=≢⍺:⍵ ⋄ d←⊃⍺ ⋄ d=e:X ⍵ ⋄ 999::⍵ ⋄ v s←(tab,⍨Wide d)Search b ⋄ (1↓⍺)∇ s v d tab.n(1<≢⍺)0}
+        X←{999::⍵ ⋄ (v s)←(tab,⍨e ¯1 1)Search b ⋄ w←s v e tab.n 1 0
+            999::w ⋄ (v s)←(tab,⍨e,¯1 1×1⌈inf×v×¯1 1)Search b ⋄ s v e tab.n 0 1}
+        G←{0=≢⍺:⍵ ⋄ d←⊃⍺ ⋄ d=e:X ⍵ ⋄ 999::⍵ ⋄ (v s)←(tab,⍨Wide d)Search b ⋄ (1↓⍺)∇ s v d tab.n(1<≢⍺)0}
         ds G(⊃⍸Moves b)(Eval b)0 0 2 0
     }
 

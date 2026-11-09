@@ -7,7 +7,7 @@
     _RA←{b←1⊃⍵ ⋄ s←⍸eng.Moves b ⋄ ⎕RL←1+2147483646|⍺⍺+eng.Key b ⋄ s[?≢s]} ⍝ agent (seed _RA): random move, reproducible from seed and position
     Greedy←{b←1⊃⍵ ⋄ s←⍸eng.Moves b ⋄ s[⊃⍒+/(s eng.Play(≢s)2 64⍴b)[;1;]]} ⍝ agent: most discs after the move, lowest square on ties
     Replay←{ ⍝ game after opening squares ⍵ from game ⍺ (default: start, Black to move); colour toggles on placements and passes
-        ⍺←0 eng.start ⋄ 0=≢⍵:⍺ ⋄ c b←⍺
+        ⍺←0 eng.start ⋄ 0=≢⍵:⍺ ⋄ (c b)←⍺
         eng.Terminal b:'opening runs past the end of the game'⎕SIGNAL 11
         ~∨/eng.Moves b:(~c)(⊖b)∇⍵
         (⊃⍵)∊⍸eng.Moves b:(~c)((⊃⍵)eng.Play b)∇1↓⍵
@@ -30,9 +30,9 @@
     }
     Elo←{400×10⍟⍵÷1-⍵} ⍝ rating difference for expected score ⍵
     Report←{ ⍝ seed ⍺; _Match_ result ⍵ → text: pairs, W/D/L, mean pair score with interval, Elo range when both ends are inside (0,1)
-        p←2÷⍨+/⍵ ⋄ w d l←+/1 0.5 0∘.=,⍵ ⋄ b←⍺ Boot p
+        p←2÷⍨+/⍵ ⋄ (w d l)←+/1 0.5 0∘.=,⍵ ⋄ b←⍺ Boot p
         0=≢b:'insufficient data'
-        m lo hi i←b ⋄ J←{1↓∊⍺,¨⍵}                                    ⍝ join texts ⍵ with ⍺
+        (m lo hi i)←b ⋄ J←{1↓∊⍺,¨⍵}                                    ⍝ join texts ⍵ with ⍺
         e←{(lo>0)∧hi<1:'  Elo [',(','J 1⍕¨Elo lo hi),']' ⋄ ''}0
         'pairs ',(⍕≢p),'  W/D/L ',('/'J⍕¨w d l),'  score ',(3⍕m),' [',(','J 3⍕¨lo hi),'] ',(i⊃'uninformative' 'bootstrap'),e
     }

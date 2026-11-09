@@ -34,7 +34,7 @@
         ↑{d←⍵ ⋄ t←⎕AI[2] ⋄ v←{1⊃(⌊/⍬)d 0 0 eng.Think ⍵}¨p ⋄ d(⎕AI[2]-t)(+/v)}¨⍵
     }
     Nodes←{ ⍝ ⍺ ≡ ordering table (0/1 switches); ⍵ depth → nodes and ms for iterative deepening to ⍵ over the midgame corpus
-        o u←⍺ ⋄ d←⍵ ⋄ t←⎕AI[2]
+        (o u)←⍺ ⋄ d←⍵ ⋄ t←⎕AI[2]
         n←+/{tab←(eng.New 20)⎕VSET('ord'o)('tt'u) ⋄ b←⍵ ⋄ z←{(tab,⍨eng.Wide ⍵)eng.Search b}¨1+⍳d ⋄ tab.n}¨12↑Corp 0
         n(⎕AI[2]-t)
     }
@@ -150,7 +150,7 @@
             r=c ⋄ (tab.n-k)<cold.n               ⍝ reused bounds: same value, fewer nodes
         )
     }
-    TestSplits←{s x←har.Splits har.Data¨'openTune' 'openVal' 'openFinal' ⋄ ∧/(x=0 ⋄ s[;0 1 2 4]≡3 4⍴512 0 8 1 ⋄ ∧/s[;3]≥20)} ⍝ frozen opening sets: oracle's split rules
+    TestSplits←{(s x)←har.Splits har.Data¨'openTune' 'openVal' 'openFinal' ⋄ ∧/(x=0 ⋄ s[;0 1 2 4]≡3 4⍴512 0 8 1 ⋄ ∧/s[;3]≥20)} ⍝ frozen opening sets: oracle's split rules
     TestSq←{∧/(0 63 19 ¯1 ¯1 ¯1 ¯1≡gm.Sq¨'a1' 'h8' 'd3' 'i1' 'a9' 'a' 'a10' ⋄ (⍳64)≡gm.Sq¨gm.Name¨⍳64)}
     TestStart←{∧/(eng.start≡(gm.Sq¨'d5' 'e4')eng.Bd gm.Sq¨'d4' 'e5' ⋄ (⍸eng.Moves eng.start)≡{⍵[⍋⍵]}gm.Sq¨'c4' 'd3' 'e6' 'f5')} ⍝ built from coordinates, not the constant
     TestStats←{ ⍝ oracle stats policy
@@ -184,7 +184,7 @@
     }
     TestWindow←{ ⍝ fail-soft: a result ≤α is an upper bound, ≥β a lower bound, otherwise exact; depth 1 is always exact
         ws←[¯300 ¯50 ⋄ ¯50 50 ⋄ 50 300 ⋄ ¯1 1 ⋄ ¯300 300 ⋄ 10 20 ⋄ ¯20 ¯10]   ⍝ windows around the true value t
-        ∧/∊{b←⍵ ⋄ ∊1 3∘.{t←⊃(eng.Wide ⍺)eng.Search b ⋄ a z←t+⍵ ⋄ r←⊃(⍺ a z)eng.Search b
+        ∧/∊{b←⍵ ⋄ ∊1 3∘.{t←⊃(eng.Wide ⍺)eng.Search b ⋄ (a z)←t+⍵ ⋄ r←⊃(⍺ a z)eng.Search b
             ∧/(r≤a)(z≤r)((a<r)∧r<z)(⍺=1)≤(t≤r)(r≤t)(r=t)(r=t)}↓ws}¨(17 Positions 2)[8×⍳6]  ⍝ p≤q: p implies q
     }
 :EndNamespace
