@@ -74,14 +74,14 @@
         s←2*⍵
         (size:s ⋄ key:s⍴¯1 ⋄ val:s⍴0 ⋄ dep:s⍴¯1 ⋄ bnd:s⍴0 ⋄ mv:s⍴¯1   ⍝ slots; per slot key (¯1 empty), value, depth, bound (0 exact 1 lower 2 upper), move
          dl:⌊/⍬ ⋄ mx:0 ⋄ n:0                             ⍝ deadline (⎕AI[2] ms), node limit (0 none), nodes so far
-         ord:1 ⋄ tt:1 ⋄ base:0)                          ⍝ oracle SearchConfig: move ordering, table use, frozen baseline Eval2
+         ord:1 ⋄ tt:1 ⋄ en:⎕THIS)                        ⍝ oracle SearchConfig: move ordering, table use, namespace whose Eval to use
     }
     Search←{ ⍝ ⍺ ≡ depth alpha beta [table]; fail-soft negamax of board ⍵ → value, best square (¯1 if none chosen)
         d a z←3↑⍺ ⋄ tab←3{⍺=≢⍵:(n:0) ⋄ ⍺⊃⍵}⍺                        ⍝ no table: a namespace that only counts nodes
-        tt ord base dl mx←tab⎕VGET('tt' 0)('ord' 1)('base' 0)('dl'(⌊/⍬))('mx' 0)
+        tt ord en dl mx←tab⎕VGET('tt' 0)('ord' 1)('en' ⎕THIS)('dl'(⌊/⍬))('mx' 0)
         (⎕AI[2]≥dl)∨(mx>0)∧tab.n≥mx:⎕SIGNAL 999                      ⍝ out of time or nodes: abandon (nothing stored)
         tab.n+←1
-        Ev←{⍺←⊢ ⋄ base:⍺ Eval2 ⍵ ⋄ ⍺ Eval ⍵}
+        Ev←{⍺←⊢ ⋄ ⍺ en.Eval ⍵}
         s←⍸Moves ⍵
         0=≢s:{∨/Moves⊖⍵:¯1,⍨-⊃(tab,⍨d,-z a)Search⊖⍵ ⋄ ¯1,⍨100×Score ⍵}⍵
         d=0:¯1,⍨Ev ⍵
@@ -121,10 +121,9 @@
     TH←{⊃⍺⍺ Think 1⊃⍵} ⍝ agent: iterative deepening within limits ⍺⍺ ≡ ms [depth [nodes]]
 
 ⍝ ─── Match harness: frozen baseline, agents, opening replay, pairs, statistics, opening splits
-    Eval2←{⍺←0 ⋄ d←⊃-/Sides ⍵ ⋄ 6400⌊¯6400⌈(100×+/d)+d+.×,weights2} ⍝ frozen phase-2 baseline (oracle eval_phase2): discs×100 + table weights2; ⍺ (move counts) ignored
     RA←{b←1⊃⍵ ⋄ s←⍸Moves b ⋄ ⎕RL←1+2147483646|⍺⍺+Key b ⋄ s[?≢s]} ⍝ agent (seed RA): random move, reproducible from seed and position
     Greedy←{b←1⊃⍵ ⋄ s←⍸Moves b ⋄ s[⊃⍒+/(s Play(≢s)2 64⍴b)[;1;]]} ⍝ agent: most discs after the move, lowest square on ties
-    P2←{tab←(New 16)⎕VSET⊂'base' 1 ⋄ 1⊃(tab,⍨Wide ⍺⍺)Search 1⊃⍵} ⍝ agent (d P2): current search to depth d with the frozen Eval2, fresh table each move
+    P2←{tab←(New 16)⎕VSET⊂'en' #.Baseline ⋄ 1⊃(tab,⍨Wide ⍺⍺)Search 1⊃⍵} ⍝ agent (d P2): current search to depth d with the frozen #.Baseline.Eval, fresh table each move
     Replay←{ ⍝ game after opening squares ⍵ from game ⍺ (default: start, Black to move); colour toggles on placements and passes
         ⍺←0 start ⋄ 0=≢⍵:⍺ ⋄ c b←⍺
         Terminal b:'opening runs past the end of the game'⎕SIGNAL 11
@@ -238,7 +237,7 @@
         G←{f←⍵ ⋄ R←{s←⍸Moves 1⊃⍵ ⋄ s[⌊(≢s)×f[+/,1⊃⍵]]} ⋄ ⍺:0<Result((2 AB)Game R)0 start ⋄ 0>Result(R Game(2 AB))0 start}
         8≤+/(10↑5⍴1)G¨↓r
     }
-    TestEval2←{¯1024 728 ¯1029 535 ¯832 338 ¯634 ¯255≡Eval2↑8↑Corp 0} ⍝ the frozen baseline stays frozen (snapshot)
+    TestEval2←{¯1024 728 ¯1029 535 ¯832 338 ¯634 ¯255≡#.Baseline.Eval↑8↑Corp 0} ⍝ the frozen baseline stays frozen (snapshot)
     TestFixtures←{ ⍝ oracle tests/perft.rs fixtures and WTHOR scoring
         p←9 Bd 0 2 ⋄ t←0 2 4 6 Bd 1 3 5 7
         ∧/(
@@ -364,7 +363,5 @@
     corners←(⍳64)∘.=0 7 56 63                                              ⍝ corners
     risk←((49×(⍳64)∊9 14 49 54)+19×(⍳64)∊1 6 8 15 48 55 57 62)×⍤0 1⊢((7×4≤8|⍳64)+56×4≤⌊8÷⍨⍳64)∘.=0 7 56 63  ⍝ X/C penalty per square, by its corner
     zobrist←{⎕RL←20261109 ⋄ ?128⍴2*45}0                                   ⍝ hash keys
-    weights2←[100 ¯20 10 5 5 10 ¯20 100 ⋄ ¯20 ¯50 ¯2 ¯2 ¯2 ¯2 ¯50 ¯20 ⋄ 10 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2 10 ⋄ 5 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2 5
-        5 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2 5 ⋄ 10 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2 10 ⋄ ¯20 ¯50 ¯2 ¯2 ¯2 ¯2 ¯50 ¯20 ⋄ 100 ¯20 10 5 5 10 ¯20 100]  ⍝ frozen baseline weights
     start←28 35 Bd 27 36                                             ⍝ Black on d5 e4, White on d4 e5, Black to move
 :EndNamespace
