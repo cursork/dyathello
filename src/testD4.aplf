@@ -1,0 +1,1 @@
+testD4←{∧/{b←⍵ ⋄ ∧/,{k←⍵ ⋄ ((k Tr Moves b)≡Moves k Tr b)∧∧/{(k Tr ⍵ Play b)≡(⊃⍸k Tr ⍵=⍳64)Play k Tr b}¨⍸Moves b}¨1+⍳7}¨3 Positions 5}

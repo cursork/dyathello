@@ -1,0 +1,1 @@
+testSplits←{s x←Splits OpenTune OpenVal OpenFinal ⋄ (x=0)∧(s[;0 1 2 4]≡3 4⍴512 0 8 1)∧∧/s[;3]≥20} ⍝ frozen opening sets: oracle's split rules

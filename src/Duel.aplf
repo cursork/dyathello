@@ -1,0 +1,4 @@
+Duel←{ ⍝ agent ⍺⍺ plays Black, ⍵⍵ White, from game ⍵ → finished game
+    ⊃⍵:Done(⍵⍵ Game ⍺⍺)⍵
+    Done(⍺⍺ Game ⍵⍵)⍵
+}

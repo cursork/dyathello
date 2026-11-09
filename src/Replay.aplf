@@ -1,0 +1,7 @@
+Replay←{ ⍝ game after opening squares ⍵ from game ⍺ (default: start, Black to move); colour toggles on placements and passes
+    ⍺←0 Start ⋄ 0=≢⍵:⍺ ⋄ c b←⍺
+    Terminal b:'opening runs past the end of the game'⎕SIGNAL 11
+    ~∨/Moves b:((~c)(⊖b))∇⍵
+    (⊃⍵)∊⍸Moves b:((~c)((⊃⍵)Play b))∇1↓⍵
+    'illegal opening move'⎕SIGNAL 11
+}

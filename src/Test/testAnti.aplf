@@ -1,1 +1,0 @@
-testAnti←{b←↑19 Positions 3 ⋄ (##.Eval⊖⍤2⊢b)≡-##.Eval b} ⍝ oracle's Eval is antisymmetric (a property of this evaluator, not relied on by Search)

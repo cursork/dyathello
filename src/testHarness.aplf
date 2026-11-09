@@ -1,0 +1,10 @@
+testHarness←{ ⍝ Phase 3: equal deterministic agents score exactly ½ per pair; matches repeat exactly; random sanity; illegal actions abort
+    o←4↑OpenTune
+    m←((2 AB)Match(2 AB))o
+    eq←(∧/0.5=(+/m)÷2)∧m≡((2 AB)Match(2 AB))o
+    r←(+/,(1 RA)Match(2 RA)20↑OpenVal)÷40 ⋄ rs←(r≥0.25)∧r≤0.75
+    Bad←{¯1} ⋄ Ill←{64}
+    b←{11::1 ⋄ z←(Bad Pair Greedy)⊃↓o ⋄ 0}0
+    i←{11::1 ⋄ z←(Ill Pair Greedy)⊃↓o ⋄ 0}0
+    eq∧rs∧b∧i
+}

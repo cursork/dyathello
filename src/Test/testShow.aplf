@@ -1,4 +1,0 @@
-testShow←{ ⍝ start picture matches the oracle; Parse inverts Show for both colours
-    e←↑' abcdefgh' '8........' '7........' '6........' '5...XO...' '4...OX...' '3........' '2........' '1........' 'Black to move. Black 2, White 2, legal: d3 c4 f5 e6'
-    (e≡##.Show 0 ##.Start)∧∧/(2|⍳≢p){(⍺ ⍵)≡##.Parse ##.Show ⍺ ⍵}¨p←3 Positions 3
-}

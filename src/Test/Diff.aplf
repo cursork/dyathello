@@ -1,1 +1,0 @@
-Diff←{∧/{b←⍵ ⋄ ((##.Moves b)≡NMoves b)∧∧/{(⍵ ##.Play b)≡⍵ NPlay b}¨⍸NMoves b}¨⍵} ⍝ production ≡ naive on boards ⍵

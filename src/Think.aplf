@@ -6,7 +6,7 @@ Think←{ ⍝ ⍺ ≡ ms [depth [nodes [threshold]]]: search board ⍵ (with a l
     ⍝ A search to depth ≥ empties sees only finished games, so solving is Search with depth = empties.
     ms n x th←4↑⍺,(≢⍺)↓0 64 0 12
     T←New 20 ⋄ T.(dl mx)←(⎕AI[2]+ms)x ⋄ b←⍵ ⋄ e←+/~∨⌿b
-    f←(⊃⍸Moves b)(T.En.Eval b)0 0 2 0
+    f←(⊃⍸Moves b)(Eval b)0 0 2 0
     e≤th:{
         w←{999::f ⋄ v s←(e,¯1 1,T)Search b ⋄ s v 0 T.n 1 0}0
         2=4⊃w:w

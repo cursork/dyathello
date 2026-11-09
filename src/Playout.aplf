@@ -1,0 +1,1 @@
+Playout←{Terminal ⍵:,⊂⍵ ⋄ r←⍺ ⋄ s←⍸Moves ⍵ ⋄ (⊂⍵),(1↓r)∇{0=≢s:⊖⍵ ⋄ s[⌊(≢s)×⊃r]Play ⍵}⍵} ⍝ boards of a game from ⍵, moves chosen by fractions ⍺

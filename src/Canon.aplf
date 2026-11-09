@@ -1,0 +1,1 @@
+Canon←{b←⍵ ⋄ ⌊/{Key ⍵ Tr b}¨⍳8} ⍝ canonical D4 key of board ⍵: least key over its 8 symmetries

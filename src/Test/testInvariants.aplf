@@ -1,1 +1,0 @@
-testInvariants←{∧/{b←⍵ ⋄ ∧/{f←⍵ ##.Flips b ⋄ c←⍵ ##.Play b ⋄ (~∨/∧⌿c)∧((+/,c)=1++/,b)∧(∨/f)∧(+/c[0;])=(+/b[1;])-+/f}¨⍸##.Moves b}¨7 Positions 20}

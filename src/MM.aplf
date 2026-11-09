@@ -1,0 +1,6 @@
+MM←{ ⍝ plain minimax to depth ⍺, one board at a time, no batching or pruning
+    s←⍸Moves ⍵
+    0=≢s:⍺{∨/Moves⊖⍵:-⍺ MM⊖⍵ ⋄ 100×Score ⍵}⍵
+    ⍺=0:Eval ⍵
+    ⌈/-(⍺-1)MM¨s Play¨⊂⍵
+}

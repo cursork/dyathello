@@ -1,0 +1,4 @@
+testBatch←{ ⍝ batched Moves and Play agree with board-at-a-time
+    b←↑7 Positions 3 ⋄ b←b⌿⍨∨/Moves b ⋄ s←⊃∘⍸¨↓Moves b
+    ((Moves b)≡↑Moves¨⊂[1 2]b)∧(s Play b)≡↑s Play¨⊂[1 2]b
+}

@@ -1,0 +1,5 @@
+Nodes←{ ⍝ ⍺ ≡ ordering table (0/1 switches); ⍵ depth → nodes and ms for iterative deepening to ⍵ over the midgame corpus
+    o u←⍺ ⋄ d←⍵ ⋄ t←⎕AI[2]
+    n←+/{T←New 20 ⋄ T.(ord tt)←o u ⋄ b←⍵ ⋄ z←{(⍵,(-INF),INF,T)Search b}¨1+⍳d ⋄ T.n}¨12↑Corp 0
+    n(⎕AI[2]-t)
+}

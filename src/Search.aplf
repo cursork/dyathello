@@ -1,7 +1,7 @@
 Search←{ ⍝ ⍺ ≡ depth alpha beta [table]; fail-soft negamax of board ⍵ → value, best square (¯1 if none chosen)
     d a z T←4↑⍺ ⋄ t←⊃9=⎕NC'T'
     q←{(⎕AI[2]≥T.dl)∨(T.mx>0)∧T.n≥T.mx:⎕SIGNAL 999 ⋄ T.n+←1 ⋄ 0}⍣t⊢0  ⍝ out of time or nodes: abandon (nothing stored)
-    Ev←{⍺←⊢ ⋄ t:⍺ T.En.Eval ⍵ ⋄ ⍺ Eval ⍵}  ⍝ the table's evaluator, else Eval
+    Ev←{⍺←⊢ ⋄ ~t:⍺ Eval ⍵ ⋄ T.base:⍺ Eval2 ⍵ ⋄ ⍺ Eval ⍵}  ⍝ the baseline evaluator if the table asks for it
     s←⍸Moves ⍵
     0=≢s:{∨/Moves⊖⍵:(-⊃(d,(-z),(-a),T)Search⊖⍵),¯1 ⋄ (100×Score ⍵),¯1}⍵
     d=0:(Ev ⍵),¯1

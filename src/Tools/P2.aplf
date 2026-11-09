@@ -1,1 +1,0 @@
-P2←{T←##.New 16 ⋄ T.En←Phase2 ⋄ 1⊃(⍺⍺,(-##.INF),##.INF,T)##.Search 1⊃⍵} ⍝ agent (d P2): current search to depth d with the frozen Phase2.Eval, fresh table each move

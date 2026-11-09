@@ -1,1 +1,0 @@
-testD4←{∧/{b←⍵ ⋄ ∧/,{k←⍵ ⋄ ((k ##.Tools.Tr ##.Moves b)≡##.Moves k ##.Tools.Tr b)∧∧/{(k ##.Tools.Tr ⍵ ##.Play b)≡(⊃⍸k ##.Tools.Tr ⍵=⍳64)##.Play k ##.Tools.Tr b}¨⍸##.Moves b}¨1+⍳7}¨3 Positions 5}
