@@ -76,21 +76,23 @@
          ord:1 ⋄ tt:1 ⋄ base:0)                          ⍝ oracle SearchConfig: move ordering, table use, frozen baseline Eval2
     }
     Search←{ ⍝ ⍺ ≡ depth alpha beta [table]; fail-soft negamax of board ⍵ → value, best square (¯1 if none chosen)
-        d a z T←4↑⍺ ⋄ t←⊃9=⎕NC'T'
-        q←{(⎕AI[2]≥T.dl)∨(T.mx>0)∧T.n≥T.mx:⎕SIGNAL 999 ⋄ T.n+←1 ⋄ 0}⍣t⊢0  ⍝ out of time or nodes: abandon (nothing stored)
-        Ev←{⍺←⊢ ⋄ ~t:⍺ Eval ⍵ ⋄ T.base:⍺ Eval2 ⍵ ⋄ ⍺ Eval ⍵}  ⍝ the baseline evaluator if the table asks for it
+        d a z←3↑⍺ ⋄ T←3{⍺=≢⍵:(n:0) ⋄ ⍺⊃⍵}⍺                        ⍝ no table: a namespace that only counts nodes
+        tt ord base dl mx←T⎕VGET('tt' 0)('ord' 1)('base' 0)('dl'(⌊/⍬))('mx' 0)
+        (⎕AI[2]≥dl)∨(mx>0)∧T.n≥mx:⎕SIGNAL 999                      ⍝ out of time or nodes: abandon (nothing stored)
+        T.n+←1
+        Ev←{⍺←⊢ ⋄ base:⍺ Eval2 ⍵ ⋄ ⍺ Eval ⍵}
         s←⍸Moves ⍵
         0=≢s:{∨/Moves⊖⍵:¯1,⍨-⊃(T,⍨d,-z a)Search⊖⍵ ⋄ ¯1,⍨100×Score ⍵}⍵
         d=0:¯1,⍨Ev ⍵
-        k i e←{~t:0 0 0 ⋄ ~T.tt:0 0 0 ⋄ k←Key ⍵ ⋄ i←T.N|k ⋄ k i(T.K[i]=k)}⍵
+        k i e←{~tt:0 0 0 ⋄ k←Key ⍵ ⋄ i←T.N|k ⋄ k i(T.K[i]=k)}⍵
         {~e:0 ⋄ T.D[i]≠d:0 ⋄ f x←T.F[i],T.V[i] ⋄ (f=⍳3)∨.∧1,(z≤x),x≤a}0:T.V[i],T.Mv[i]
         h←{~e:¯1 ⋄ T.D[i]≥d:T.Mv[i] ⋄ ¯1}0
         c←s Play(≢s)2 64⍴⍵
-        v←-Ev Leaf c ⋄ q←{T.n+←≢c ⋄ 0}⍣t⊢0  ⍝ nodes: Search calls plus boards scored
-        o←{t:{T.ord:⍵ ⋄ ⍳≢s}⍵ ⋄ ⍵}⍒v ⋄ o←(o/⍨s[o]=h),o/⍨s[o]≠h  ⍝ table move first, then static value
+        v←-Ev Leaf c ⋄ T.n+←≢c                                     ⍝ nodes: Search calls plus boards scored
+        o←{ord:⍵ ⋄ ⍳≢s}⍒v ⋄ o←(o/⍨s[o]=h),o/⍨s[o]≠h  ⍝ table move first, then static value
         L←{i b m a←⍵ ⋄ i=≢o:b m ⋄ x←-⊃(T,⍨(d-1),-z a)Search c[o[i];;] ⋄ b m←(x>b)⊃(b m)(x,s[o[i]]) ⋄ a⌈←x ⋄ a≥z:b m ⋄ ∇(i+1)b m a}
         r←{d=1:(⌈/v),s[⊃⍒v] ⋄ L 0(-INF)¯1 a}0
-        ~t:r ⋄ ~T.tt:r
+        ~tt:r
         T.K[i]←k ⋄ T.V[i]←⊃r ⋄ T.D[i]←d ⋄ T.Mv[i]←1⊃r
         w←⊃r ⋄ T.F[i]←(d>1)×(z≤w)+2×w≤a
         r
