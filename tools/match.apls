@@ -1,7 +1,7 @@
 #!/usr/local/bin/dyalogscript
 ⍝ Headless match: phase-2 baseline (4 P2) against Greedy over the first N tuning openings (default 20).
-⍝ Run from the project root: ./tools/match.apls [N]. Needs no Link: Othello.Data finds src/data from the fixed file.
+⍝ Run from the project root: ./tools/match.apls [N]. Needs no Link: Othello.Data finds src/data.dcf from the fixed file.
 z←2⎕FIX'file://',(⊃1⎕NPARTS''),'src/Othello.apln'
 a←2⎕NQ'.' 'GetCommandLineArgs'
 n←{0=≢⍵:20 ⋄ ⊃⊃(//)⎕VFI⊃⌽⍵}a/⍨∧/¨a∊¨⊂⎕D
-⎕←#.Othello.{1 Report((4 P2)Match Greedy)⍵↑Data'OpenTune'}n
+⎕←#.Othello.{1 Report((4 P2)Match Greedy)⍵↑Data'openTune'}n
