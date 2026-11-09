@@ -1,5 +1,7 @@
 # Othello in Dyalog APL
 
+![The raylibAPL front end: the engine has just played g1; dots mark Black's legal moves](docs/screenshot.png)
+
 An [Othello](https://en.wikipedia.org/wiki/Reversi) engine written in Dyalog APL (`⎕IO←0`). The engine is the scripted namespace `src/Othello.apln`; this document outlines the algorithms it implements.
 
 ## Layout
@@ -11,7 +13,7 @@ An [Othello](https://en.wikipedia.org/wiki/Reversi) engine written in Dyalog APL
 | `src/Harness.apln` | Match harness: opening sets, colour-swapped pairs, statistics |
 | `src/Tests.apln` | Tests, a naive reference implementation, benchmarks |
 | `src/data.dcf` | Component file with opening sets and test positions |
-| `ui/othello.apls` | A raylibAPL front end |
+| `ui/othello.apls` | A [raylibAPL](https://github.com/Brian-ED/raylibAPL) front end |
 
 ## Board representation
 
