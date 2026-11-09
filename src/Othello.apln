@@ -188,7 +188,7 @@
     }
     BenchID←{ ⍝ depths ⍵ → per depth: depth, total ms over BenchPos for iterative deepening to that depth, sum of values
         p←BenchPos 0
-        ↑{d←⍵ ⋄ t←⎕AI[2] ⋄ v←{⊃(⌊/⍬)d Think ⍵}¨p ⋄ d(⎕AI[2]-t)(+/v)}¨⍵
+        ↑{d←⍵ ⋄ t←⎕AI[2] ⋄ v←{1⊃(⌊/⍬)d 0 0 Think ⍵}¨p ⋄ d(⎕AI[2]-t)(+/v)}¨⍵
     }
     Nodes←{ ⍝ ⍺ ≡ ordering table (0/1 switches); ⍵ depth → nodes and ms for iterative deepening to ⍵ over the midgame corpus
         o u←⍺ ⋄ d←⍵ ⋄ t←⎕AI[2]
