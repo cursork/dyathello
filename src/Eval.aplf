@@ -1,6 +1,6 @@
 Eval←{ ⍝ oracle evaluate in centidiscs (±6400) for each board (…,2,64): table, mobility, frontier, corner risk, blended by phase
     ⍝ ⍺ (optional): move counts of the side to move and of the opponent
-    ⍺←(+/Moves ⍵)(+/Moves⊖⍤2⊢⍵) ⋄ a t←⍺
+    ⍺←+/∘Moves¨⍵(⊖⍤2⊢⍵) ⋄ a t←⍺
     m o←Sides ⍵ ⋄ e←~m∨o ⋄ d←m-o
     p←⌊1000×(60-12⌈60⌊+/e)÷48
     B←{⍵[0]+(p×-/⌽⍵)Div 1000}

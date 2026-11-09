@@ -1,5 +1,5 @@
 Leaf←{ ⍝ (E Leaf) depth-0 value under evaluator E of each board in stack ⍵, as Search would give it: exact if finished, opponent's Eval negated after a forced pass
-    a←+/Moves ⍵ ⋄ t←+/Moves⊖⍤2⊢⍵
+    a t←+/∘Moves¨⍵(⊖⍤2⊢⍵)
     v←(a t)⍺⍺ ⍵
     ~0∊a:v
     i←⍸(a=0)∧t>0 ⋄ v[i]←-(t[i])(a[i])⍺⍺⊖⍤2⊢⍵[i;;]

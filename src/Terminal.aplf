@@ -1,1 +1,1 @@
-Terminal←{~∨/(Moves ⍵)∨Moves⊖⍤2⊢⍵} ⍝ neither side can move, per board
+Terminal←{~∨/⍵∨⍥Moves⊖⍤2⊢⍵} ⍝ neither side can move, per board
