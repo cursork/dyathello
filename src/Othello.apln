@@ -224,13 +224,13 @@
     TestAnti←{b←↑19 Positions 3 ⋄ (Eval⊖⍤2⊢b)≡-Eval b} ⍝ oracle's Eval is antisymmetric (a property of this evaluator, not relied on by Search)
     TestBatch←{ ⍝ batched Moves and Play agree with board-at-a-time
         b←↑7 Positions 3 ⋄ b←b⌿⍨∨/Moves b ⋄ s←⊃∘⍸¨↓Moves b
-        ((Moves b)≡↑Moves¨⊂[1 2]b)∧(s Play b)≡↑s Play¨⊂[1 2]b
+        ∧/((Moves b)≡↑Moves¨⊂[1 2]b ⋄ (s Play b)≡↑s Play¨⊂[1 2]b)
     }
-    TestD4←{∧/{b←⍵ ⋄ ∧/,{k←⍵ ⋄ ((k Tr Moves b)≡Moves k Tr b)∧∧/{(k Tr ⍵ Play b)≡(⊃⍸k Tr ⍵=⍳64)Play k Tr b}¨⍸Moves b}¨1+⍳7}¨3 Positions 5}
+    TestD4←{∧/{b←⍵ ⋄ ∧/,{k←⍵ ⋄ ∧/((k Tr Moves b)≡Moves k Tr b ⋄ ∧/{(k Tr ⍵ Play b)≡(⊃⍸k Tr ⍵=⍳64)Play k Tr b}¨⍸Moves b)}¨1+⍳7}¨3 Positions 5}
     TestDiff←{Diff 42 Positions 5}
     TestEnd←{ ⍝ oracle double-no-move fixture: c1 takes b1 and ends the game 3–0 with 61 empties
         b←0 Bd 1
-        (6400 2≡(Wide 1)Search b)∧(6400 2≡(Wide 3)Search b)∧Terminal 2 Play b
+        ∧/(6400 2≡(Wide 1)Search b ⋄ 6400 2≡(Wide 3)Search b ⋄ Terminal 2 Play b)
     }
     TestEngine←{ ⍝ depth-2 alpha-beta beats a (seeded) random player from both colours
         ⎕RL←23 ⋄ r←?10 70⍴0
@@ -239,22 +239,30 @@
     }
     TestEval2←{¯1024 728 ¯1029 535 ¯832 338 ¯634 ¯255≡Eval2↑8↑Corp 0} ⍝ the frozen baseline stays frozen (snapshot)
     TestFixtures←{ ⍝ oracle tests/perft.rs fixtures and WTHOR scoring
-        p←9 Bd 0 2                  ⍝ side to move must pass; opponent has two replies
-        t←0 2 4 6 Bd 1 3 5 7        ⍝ early terminal, tied
-        (1 2≡1 2 Perft¨⊂p)∧(1 1≡1 5 Perft¨⊂t)∧(Terminal t)∧(0=Score t)∧(62 ¯62≡Score¨(0 1 Bd 2)(2 Bd 0 1))∧1=0 Perft start
+        p←9 Bd 0 2 ⋄ t←0 2 4 6 Bd 1 3 5 7
+        ∧/(
+            1 2≡1 2 Perft¨⊂p                    ⍝ the side to move must pass; the opponent has two replies
+            1 1≡1 5 Perft¨⊂t                    ⍝ an early (tied) end counts one at any depth
+            Terminal t
+            0=Score t
+            62 ¯62≡Score¨(0 1 Bd 2)(2 Bd 0 1)   ⍝ empties go to the winner
+            1=0 Perft start
+        )
     }
-    TestGame←{⎕RL←5 ⋄ g←(Rnd Game Rnd)0 start ⋄ (Terminal 1⊃g)∧64≥|Result g}
-    TestHarness←{ ⍝ Phase 3: equal deterministic agents score exactly ½ per pair; matches repeat exactly; random sanity; illegal actions abort
-        o←4↑Data'OpenTune'
-        m←((2 AB)Match(2 AB))o
-        eq←(∧/0.5=(+/m)÷2)∧m≡((2 AB)Match(2 AB))o
-        r←(+/,(1 RA)Match(2 RA)20↑Data'OpenVal')÷40 ⋄ rs←(r≥0.25)∧r≤0.75
+    TestGame←{g←(Rnd Game Rnd)0 start ⋄ ∧/(Terminal 1⊃g ⋄ 64≥|Result g)}
+    TestHarness←{ ⍝ Phase 3 harness
+        o←4↑Data'OpenTune' ⋄ m←((2 AB)Match(2 AB))o
+        r←40÷⍨+/,(1 RA)Match(2 RA)20↑Data'OpenVal'
         Bad←{¯1} ⋄ Ill←{64}
-        b←{11::1 ⋄ z←(Bad Pair Greedy)⊃↓o ⋄ 0}0
-        i←{11::1 ⋄ z←(Ill Pair Greedy)⊃↓o ⋄ 0}0
-        eq∧rs∧b∧i
+        ∧/(
+            ∧/0.5=2÷⍨+/m                         ⍝ equal deterministic agents score exactly ½ per pair
+            m≡((2 AB)Match(2 AB))o               ⍝ matches repeat exactly
+            (r≥0.25)∧r≤0.75                      ⍝ random against random: sanity
+            {11::1 ⋄ 0⊣(Bad Pair Greedy)⊃↓o}0    ⍝ stopping while legal moves exist aborts
+            {11::1 ⋄ 0⊣(Ill Pair Greedy)⊃↓o}0    ⍝ an illegal square aborts
+        )
     }
-    TestInvariants←{∧/{b←⍵ ⋄ ∧/{f←⍵ Flips b ⋄ c←⍵ Play b ⋄ (~∨/∧⌿c)∧((+/,c)=1++/,b)∧(∨/f)∧(+/c[0;])=(+/b[1;])-+/f}¨⍸Moves b}¨7 Positions 20}
+    TestInvariants←{∧/{b←⍵ ⋄ ∧/{f←⍵ Flips b ⋄ c←⍵ Play b ⋄ ∧/(~∨/∧⌿c ⋄ (+/,c)=1++/,b ⋄ ∨/f ⋄ (+/c[0;])=(+/b[1;])-+/f)}¨⍸Moves b}¨7 Positions 20}
     TestLeaf←{ ⍝ Leaf on a normal, a forced-pass and a finished board, without assuming Eval is antisymmetric
         b←↑start(9 Bd 0 2)(0 1 2 Bd ⍬)
         (Eval Leaf b)≡(Eval start),(-Eval 0 2 Bd 9),6400
@@ -281,45 +289,57 @@
            '2........'
            '1........'
            'Black to move. Black 2, White 2, legal: d3 c4 f5 e6']
-        (e≡Show 0 start)∧∧/(2|⍳≢p){(⍺ ⍵)≡Parse Show ⍺ ⍵}¨p←3 Positions 3
+        p←3 Positions 3
+        ∧/(e≡Show 0 start ⋄ ∧/(2|⍳≢p){(⍺ ⍵)≡Parse Show ⍺ ⍵}¨p)
     }
-    TestSolve←{ ⍝ Phase 6: solve ≡ plain minimax at 6 empties; win/draw/loss first; partial after WDL; fallback inside WDL; WDL bounds reused
-        forever←⌊/⍬ ⋄ g←{⍵/⍨6={+/~∨⌿⍵}¨⍵}{⍵/⍨{∨/Moves ⍵}¨⍵}31 Positions 12
-        s←{forever 64 0 14 Think ⍵}¨g
-        ex←∧/({0 1≡⍵[4 5]}¨s)∧(1⊃¨s)={6 MM ⍵}¨g  ⍝ complete, solved, value = 6-ply minimax (exact at 6 empties)
+    TestSolve←{ ⍝ Phase 6 solver
+        forever←⌊/⍬ ⋄ g←{⍵/⍨6={+/~∨⌿⍵}¨⍵}{⍵/⍨{∨/Moves ⍵}¨⍵}31 Positions 12 ⋄ s←{forever 64 0 14 Think ⍵}¨g
         b←⊃g/⍨0≠1⊃¨s ⋄ v←1⊃forever 64 0 14 Think b
-        tab←New 20 ⋄ w←⊃(6,¯1 1,tab)Search b ⋄ wd←(×w)=×v ⋄ k←tab.n
-        p←forever 64(k+1)14 Think b ⋄ pa←(1 0≡p[4 5])∧((×1⊃p)=×v)∧(⊃p)∊⍸Moves b
-        fb←2 0≡(forever 64 2 14 Think b)[4 5]
-        cold←New 20 ⋄ c←(cold,⍨Wide 6)Search b
-        r←⊃(tab,⍨6,¯1 1×1⌈inf×w×¯1 1)Search b
-        ru←(r=⊃c)∧(tab.n-k)<cold.n
-        ex∧wd∧pa∧fb∧ru
+        tab←New 20 ⋄ w←⊃(tab,⍨6 ¯1 1)Search b ⋄ k←tab.n            ⍝ win/draw/loss into tab
+        cold←New 20 ⋄ c←⊃(cold,⍨Wide 6)Search b
+        r←⊃(tab,⍨6,¯1 1×1⌈inf×w×¯1 1)Search b                     ⍝ exact, reusing tab's bounds
+        p←forever 64(k+1)14 Think b
+        ∧/(
+            ∧/{0 1≡⍵[4 5]}¨s                     ⍝ complete and solved
+            (1⊃¨s)≡{6 MM ⍵}¨g                    ⍝ = plain minimax (exact at 6 empties)
+            (×w)=×v                              ⍝ win/draw/loss has the exact value's sign
+            1 0≡p[4 5]                           ⍝ out of nodes just after win/draw/loss: partial, not solved,
+            (×1⊃p)=×v ⋄ (⊃p)∊⍸Moves b            ⍝ right sign, legal move
+            2 0≡(forever 64 2 14 Think b)[4 5]   ⍝ out of nodes inside win/draw/loss: fallback
+            r=c ⋄ (tab.n-k)<cold.n               ⍝ reused bounds: same value, fewer nodes
+        )
     }
-    TestSplits←{s x←Splits Data¨'OpenTune' 'OpenVal' 'OpenFinal' ⋄ (x=0)∧(s[;0 1 2 4]≡3 4⍴512 0 8 1)∧∧/s[;3]≥20} ⍝ frozen opening sets: oracle's split rules
-    TestSq←{(0 63 19 ¯1 ¯1 ¯1 ¯1≡Sq¨'a1' 'h8' 'd3' 'i1' 'a9' 'a' 'a10')∧(⍳64)≡Sq¨Name¨⍳64}
-    TestStart←{(start≡(8⊥¨(4 3)(3 4))Bd 8⊥¨(3 3)(4 4))∧(⍸Moves start)≡{⍵[⍋⍵]}8⊥¨(3 2)(2 3)(5 4)(4 5)}
-    TestStats←{ ⍝ oracle stats policy: no pairs; one pair; zero variance; bootstrap; Elo only from finite endpoints
-        z←⍬≡1 Boot ⍬
-        one←0.5 0 1 0≡1 Boot,0.5
-        f←1 Boot 10⍴1 ⋄ flat←(1 1 0≡f[0 2 3])∧1>1⊃f
-        b←1 Boot 20⍴1 0.5 0 1 ⋄ boot←(1=3⊃b)∧(</b[1 0 2])∧b≡1 Boot 20⍴1 0.5 0 1
-        e←(~∨/'Elo'⍷1 Report 10 2⍴1)∧∨/'Elo'⍷1 Report 20 2⍴1 0 0.5 1
-        z∧one∧flat∧boot∧e
+    TestSplits←{s x←Splits Data¨'OpenTune' 'OpenVal' 'OpenFinal' ⋄ ∧/(x=0 ⋄ s[;0 1 2 4]≡3 4⍴512 0 8 1 ⋄ ∧/s[;3]≥20)} ⍝ frozen opening sets: oracle's split rules
+    TestSq←{∧/(0 63 19 ¯1 ¯1 ¯1 ¯1≡Sq¨'a1' 'h8' 'd3' 'i1' 'a9' 'a' 'a10' ⋄ (⍳64)≡Sq¨Name¨⍳64)}
+    TestStart←{∧/(start≡(Sq¨'d5' 'e4')Bd Sq¨'d4' 'e5' ⋄ (⍸Moves start)≡{⍵[⍋⍵]}Sq¨'c4' 'd3' 'e6' 'f5')} ⍝ built from coordinates, not the constant
+    TestStats←{ ⍝ oracle stats policy
+        f←1 Boot 10⍴1 ⋄ b←1 Boot 20⍴1 0.5 0 1
+        ∧/(
+            ⍬≡1 Boot ⍬                           ⍝ no pairs: insufficient
+            0.5 0 1 0≡1 Boot,0.5                 ⍝ one pair: Hoeffding, uninformative
+            (1 1 0≡f[0 2 3])∧1>1⊃f               ⍝ zero variance: Hoeffding, uninformative
+            (1=3⊃b)∧</b[1 0 2]                   ⍝ bootstrap: informative, low < mean < high
+            b≡1 Boot 20⍴1 0.5 0 1                ⍝ seeded: repeatable
+            ~∨/'Elo'⍷1 Report 10 2⍴1             ⍝ no Elo from an end at 0 or 1
+            ∨/'Elo'⍷1 Report 20 2⍴1 0 0.5 1      ⍝ Elo from finite ends
+        )
     }
     TestTT←{ ⍝ the table never changes a value: cold, warm, deep-then-shallow, and a 1-slot table where every key collides
-        p←(11 Positions 2)[15×⍳4]
         ∧/{b←⍵ ⋄ v←{⊃(Wide ⍵)Search b}¨4 3 4 ⋄ tab←New 16 ⋄ one←New 0
-            (v≡{⊃(tab,⍨Wide ⍵)Search b}¨4 3 4)∧v≡{⊃(one,⍨Wide ⍵)Search b}¨4 3 4}¨p
+            ∧/(v≡{⊃(tab,⍨Wide ⍵)Search b}¨4 3 4 ⋄ v≡{⊃(one,⍨Wide ⍵)Search b}¨4 3 4)}¨(11 Positions 2)[15×⍳4]
     }
-    TestThink←{ ⍝ Phase 4: ID ≡ fixed depth; deterministic cancellation by time 0 and by nodes; 50 ms smoke; exact stop (solver off: threshold 0)
+    TestThink←{ ⍝ Phase 4 (solver off: threshold 0)
         p←(11 Positions 2)[15×⍳4] ⋄ b←⊃p ⋄ forever←⌊/⍬
-        id←∧/{(⊃(Wide 4)Search ⍵)=1⊃forever 4 0 0 Think ⍵}¨p
-        f←((⊃⍸Moves b),(Eval b),0 0 2 0)≡0 Think b
-        r←forever 64 300∘Think¨b b ⋄ nd←(≡/r)∧(1 2∊⍨4⊃⊃r)∧(⊃⊃r)∊⍸Moves b
-        t←⎕AI[2] ⋄ s←50 Think b ⋄ sm←((⎕AI[2]-t)≤100)∧(⊃s)∊⍸Moves b
-        e←⊃(11 Positions 1)[50] ⋄ x←forever 64 0 0 Think e ⋄ ex←(0=4⊃x)∧(2⊃x)=+/~∨⌿e
-        id∧f∧nd∧sm∧ex
+        r←forever 64 300∘Think¨b b
+        t←⎕AI[2] ⋄ s←50 Think b ⋄ ms←⎕AI[2]-t
+        e←⊃(11 Positions 1)[50] ⋄ x←forever 64 0 0 Think e
+        ∧/(
+            ∧/{(⊃(Wide 4)Search ⍵)=1⊃forever 4 0 0 Think ⍵}¨p   ⍝ iterative deepening ≡ fixed depth
+            ((⊃⍸Moves b),(Eval b),0 0 2 0)≡0 Think b             ⍝ time 0: fallback
+            ≡/r ⋄ (4⊃⊃r)∊1 2 ⋄ (⊃⊃r)∊⍸Moves b                    ⍝ node limit: repeatable, partial or fallback, legal
+            ms≤100 ⋄ (⊃s)∊⍸Moves b                               ⍝ 50 ms: on time, legal
+            (0=4⊃x)∧(2⊃x)=+/~∨⌿e                                 ⍝ stops, complete, at depth = empties
+        )
     }
     TestWindow←{ ⍝ fail-soft: a result ≤α is an upper bound, ≥β a lower bound, otherwise exact; depth 1 is always exact
         ws←[¯300 ¯50 ⋄ ¯50 50 ⋄ 50 300 ⋄ ¯1 1 ⋄ ¯300 300 ⋄ 10 20 ⋄ ¯20 ¯10]   ⍝ windows around the true value t
