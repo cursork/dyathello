@@ -1,6 +1,6 @@
 testThink←{ ⍝ Phase 4: ID ≡ fixed depth; deterministic cancellation by time 0 and by nodes; 50 ms smoke; exact stop (solver off: threshold 0)
     p←(11 Positions 2)[15×⍳4] ⋄ b←⊃p ⋄ I←⌊/⍬
-    id←∧/{(⊃(4,(-INF),INF)Search ⍵)=1⊃I 4 0 0 Think ⍵}¨p
+    id←∧/{(⊃(Wide 4)Search ⍵)=1⊃I 4 0 0 Think ⍵}¨p
     f←((⊃⍸Moves b),(Eval b),0 0 2 0)≡0 Think b
     r←I 64 300∘Think¨b b ⋄ nd←(≡/r)∧(1 2∊⍨4⊃⊃r)∧(⊃⊃r)∊⍸Moves b
     t←⎕AI[2] ⋄ s←50 Think b ⋄ sm←((⎕AI[2]-t)≤100)∧(⊃s)∊⍸Moves b

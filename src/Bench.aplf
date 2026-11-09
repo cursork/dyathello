@@ -1,4 +1,4 @@
 Bench←{ ⍝ depths ⍵ → per depth: depth, total ms over BenchPos, sum of values (to spot behaviour changes)
     p←BenchPos 0
-    ↑{d←⍵ ⋄ t←⎕AI[2] ⋄ v←{⊃(d,(-INF),INF)Search ⍵}¨p ⋄ d(⎕AI[2]-t)(+/v)}¨⍵
+    ↑{d←⍵ ⋄ t←⎕AI[2] ⋄ v←{⊃(Wide d)Search ⍵}¨p ⋄ d(⎕AI[2]-t)(+/v)}¨⍵
 }

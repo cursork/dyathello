@@ -1,4 +1,4 @@
 testEnd←{ ⍝ oracle double-no-move fixture: c1 takes b1 and ends the game 3–0 with 61 empties
     b←0 Bd 1
-    (6400 2≡(1,(-INF),INF)Search b)∧(6400 2≡(3,(-INF),INF)Search b)∧Terminal 2 Play b
+    (6400 2≡(Wide 1)Search b)∧(6400 2≡(Wide 3)Search b)∧Terminal 2 Play b
 }

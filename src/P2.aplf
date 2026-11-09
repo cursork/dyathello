@@ -1,1 +1,1 @@
-P2←{T←New 16 ⋄ T.base←1 ⋄ 1⊃(⍺⍺,(-INF),INF,T)Search 1⊃⍵} ⍝ agent (d P2): current search to depth d with the frozen Eval2, fresh table each move
+P2←{T←New 16 ⋄ T.base←1 ⋄ 1⊃(T,⍨Wide ⍺⍺)Search 1⊃⍵} ⍝ agent (d P2): current search to depth d with the frozen Eval2, fresh table each move

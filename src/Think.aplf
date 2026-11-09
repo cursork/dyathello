@@ -10,10 +10,10 @@ Think←{ ⍝ ⍺ ≡ ms [depth [nodes [threshold]]]: search board ⍵ (with a l
     e≤th:{
         w←{999::f ⋄ v s←(e,¯1 1,T)Search b ⋄ s v 0 T.n 1 0}0
         2=4⊃w:w
-        a z←((-INF)0)(¯1 1)(0 INF)⊃⍨1+×1⊃w
+        a z←¯1 1×1⌈INF×(1⊃w)×¯1 1  ⍝ win: ¯1 INF, loss: -INF 1, draw: ¯1 1
         999::w ⋄ v s←(e,a,z,T)Search b ⋄ s v 0 T.n 0 1
     }0
     n⌊←e
-    G←{d r←⍵ ⋄ d>n:r ⋄ 999::r ⋄ v s←(d,(-INF),INF,T)Search b ⋄ ∇(d+1)(s v d T.n(d<n)0)}
+    G←{d r←⍵ ⋄ d>n:r ⋄ 999::r ⋄ v s←(T,⍨Wide d)Search b ⋄ ∇(d+1)(s v d T.n(d<n)0)}
     G 1 f
 }

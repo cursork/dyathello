@@ -6,8 +6,8 @@ testSolve←{ ⍝ Phase 6: solve ≡ plain minimax at 6 empties; win/draw/loss f
     T←New 20 ⋄ w←⊃(6,¯1 1,T)Search b ⋄ wd←(×w)=×v ⋄ k←T.n
     p←I 64(k+1)14 Think b ⋄ pa←(1 0≡p[4 5])∧((×1⊃p)=×v)∧(⊃p)∊⍸Moves b
     fb←2 0≡(I 64 2 14 Think b)[4 5]
-    C←New 20 ⋄ c←(6,(-INF),INF,C)Search b
-    r←⊃(6,(((-INF)0)(¯1 1)(0 INF)⊃⍨1+×w),T)Search b
+    C←New 20 ⋄ c←(C,⍨Wide 6)Search b
+    r←⊃(T,⍨6,¯1 1×1⌈INF×w×¯1 1)Search b
     ru←(r=⊃c)∧(T.n-k)<C.n
     ex∧wd∧pa∧fb∧ru
 }
