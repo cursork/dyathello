@@ -1,0 +1,190 @@
+:Namespace Tests
+⍝ Tests for the Othello engine (#.Othello), its games (#.Games) and match harness.
+⍝ RunTests 0 → names of failing Test* functions (none = pass); Slow* functions are run by hand.
+⍝ The naive reference (NRay NFlips NMoves NPlay) walks coordinates; keep it independent of the engine.
+    ⎕IO←0
+    eng←#.Othello
+    RunTests←{t←{⍵/⍨(⊂'Test')≡¨4↑¨⍵}⎕NL ¯3 ⋄ t/⍨~{⍎⍵,' 0'}¨t} ⍝ names of failing tests
+    NRay←{c←⍺∘+¨⍵∘×¨1+⍳7 ⋄ 8⊥¨c/⍨∧\{∧/(⍵≥0)∧⍵<8}¨c} ⍝ squares walked from (rank file) ⍺ in direction ⍵
+    NFlips←{ ⍝ naive Flips: walk coordinates from square ⍺ on board ⍵
+        v←-⌿⍵ ⋄ p←8 8⊤⍺
+        (⍳64)∊∊{r←p NRay ⍵ ⋄ w←v[r] ⋄ n←+/∧\w=¯1 ⋄ n=≢w:⍬ ⋄ (1=w[n])/n↑r}¨(,∘.,⍨¯1 0 1)~⊂0 0
+    }
+    NMoves←{e←⍸~∨⌿⍵ ⋄ (⍳64)∊e/⍨∨/¨e NFlips¨⊂⍵} ⍝ naive Moves
+    NPlay←{f←⍺ NFlips ⍵ ⋄ (⍸⍵[1;]>f)eng.Bd ⍺,⍸⍵[0;]∨f} ⍝ naive Play, built from square lists
+    Playout←{eng.Terminal ⍵:,⊂⍵ ⋄ r←⍺ ⋄ s←⍸eng.Moves ⍵ ⋄ (⊂⍵),(1↓r)∇{0=≢s:⊖⍵ ⋄ s[⌊(≢s)×⊃r]eng.Play ⍵}⍵} ⍝ boards of a game from ⍵, moves chosen by fractions ⍺
+    Positions←{⎕RL←⍺ ⋄ ⊃,/(↓?(⍵,70)⍴0)Playout¨⊂eng.start} ⍝ boards from ⍵ random games with seed ⍺ (⎕RL set here is not seen by called dfns, so draw here)
+    MM←{ ⍝ plain minimax to depth ⍺, one board at a time, no batching or pruning
+        s←⍸eng.Moves ⍵
+        0=≢s:⍺{∨/eng.Moves⊖⍵:-⍺ MM⊖⍵ ⋄ 100×eng.Score ⍵}⍵
+        ⍺=0:eng.Eval ⍵
+        ⌈/-(⍺-1)MM¨s eng.Play¨⊂⍵
+    }
+    Diff←{∧/{b←⍵ ⋄ ((eng.Moves b)≡NMoves b)∧∧/{(⍵ eng.Play b)≡⍵ NPlay b}¨⍸NMoves b}¨⍵} ⍝ production ≡ naive on boards ⍵
+    Corp←{⊂[1 2]eng.Data'corpus'} ⍝ corpus boards: 0–11 midgame (28–40 empties), 12–19 late (12–16), 20–25 with a move that forces a pass
+    BenchPos←{⊃,/{((31+⍵)Positions 1)[20 30]}¨⍳3} ⍝ six fixed midgame positions
+    Bench←{ ⍝ depths ⍵ → per depth: depth, total ms over BenchPos, sum of values (to spot behaviour changes)
+        p←BenchPos 0
+        ↑{d←⍵ ⋄ t←⎕AI[2] ⋄ v←{⊃(eng.Wide d)eng.Search ⍵}¨p ⋄ d(⎕AI[2]-t)(+/v)}¨⍵
+    }
+    BenchID←{ ⍝ depths ⍵ → per depth: depth, total ms over BenchPos for iterative deepening to that depth, sum of values
+        p←BenchPos 0
+        ↑{d←⍵ ⋄ t←⎕AI[2] ⋄ v←{1⊃(⌊/⍬)d 0 0 eng.Think ⍵}¨p ⋄ d(⎕AI[2]-t)(+/v)}¨⍵
+    }
+    Nodes←{ ⍝ ⍺ ≡ ordering table (0/1 switches); ⍵ depth → nodes and ms for iterative deepening to ⍵ over the midgame corpus
+        o u←⍺ ⋄ d←⍵ ⋄ t←⎕AI[2]
+        n←+/{tab←(eng.New 20)⎕VSET('ord'o)('tt'u) ⋄ b←⍵ ⋄ z←{(tab,⍨eng.Wide ⍵)eng.Search b}¨1+⍳d ⋄ tab.n}¨12↑Corp 0
+        n(⎕AI[2]-t)
+    }
+    SlowDiff←{Diff 1729 Positions 100}
+    SlowEndBench←{ ⍝ empties ⍵ → per count: positions, solved within 5 s, median, p90, max ms (10 positions each, seed 41)
+        g←{⍵/⍨{∨/eng.Moves ⍵}¨⍵}41 Positions 30
+        ↑{e←⍵ ⋄ p←10↑g/⍨e={+/~∨⌿⍵}¨g
+            r←{t←⎕AI[2] ⋄ x←5000 64 0 14 eng.Think ⍵ ⋄ (5⊃x),⎕AI[2]-t}¨p
+            s←{⍵[⍋⍵]}1⊃¨r ⋄ e(≢p)(+/⊃¨r),s[⌊0.5+(¯1+≢s)×0.5 0.9 1]}¨⍵
+    }
+    SlowGame←{ ⍝ Phase 6 gate: a full game, engine at 5 s per move (solver from 12 empties) vs seeded random → longest move ms, engine's moves, final Black margin
+        t←⍬ ⋄ r←?70⍴0
+        E←{s←⎕AI[2] ⋄ m←⊃5000 eng.Think 1⊃⍵ ⋄ t,←⎕AI[2]-s ⋄ m}
+        R←{s←⍸eng.Moves 1⊃⍵ ⋄ s[⌊(≢s)×r[+/,1⊃⍵]]}
+        g←(E eng.Game R)0 eng.start
+        (⌈/t)(≢t)(eng.Result g)
+    }
+    SlowGate←{ ⍝ oracle Phase 3 gate: phase2 vs greedy, 200 pairs, seed 1, reproducible with a valid interval → report, repeat identical
+        o←200↑eng.Data'openTune'
+        m←((4 eng.P2)eng.Match eng.Greedy)o
+        (1 eng.Report m)(m≡((4 eng.P2)eng.Match eng.Greedy)o)
+    }
+    SlowPerft←{3005288 24571284≡9 10 eng.Perft¨⊂eng.start}
+    SlowSolve←{ ⍝ oracle's known endgames (tests/search.rs solver_known_endgames): 12 and 11 empties → values ≡ ¯2200 1800, and ms each
+        a←(0 4 8 10 11 16 17 18 19 22 24 28 29 30 31 32 37 38 39 43 45 46 50 51 52 54 59 60 61 62)eng.Bd 5 7 12 13 14 20 21 25 26 27 33 34 35 36 40 41 42 44 48 49 53 57
+        b←(12 18 19 23 27 30 31 38 39 40 41 45 48 49 50 53 54 55 56 57)eng.Bd 1 2 3 4 5 6 9 10 11 13 14 17 20 21 22 24 25 26 28 29 33 34 35 36 37 42 43 44 51 52 60 62 63
+        r←{t←⎕AI[2] ⋄ v←1⊃(⌊/⍬)64 0 14 eng.Think ⍵ ⋄ v,⎕AI[2]-t}¨a b
+        (¯2200 1800≡⊃¨r)(1⊃¨r)
+    }
+    TestAnti←{b←↑19 Positions 3 ⋄ (eng.Eval⊖⍤2⊢b)≡-eng.Eval b} ⍝ oracle's Eval is antisymmetric (a property of this evaluator, not relied on by Search)
+    TestBatch←{ ⍝ batched Moves and Play agree with board-at-a-time
+        b←↑7 Positions 3 ⋄ b←b⌿⍨∨/eng.Moves b ⋄ s←⊃∘⍸¨↓eng.Moves b
+        ∧/((eng.Moves b)≡↑eng.Moves¨⊂[1 2]b ⋄ (s eng.Play b)≡↑s eng.Play¨⊂[1 2]b)
+    }
+    TestD4←{∧/{b←⍵ ⋄ ∧/,{k←⍵ ⋄ ∧/((k eng.Tr eng.Moves b)≡eng.Moves k eng.Tr b ⋄ ∧/{(k eng.Tr ⍵ eng.Play b)≡(⊃⍸k eng.Tr ⍵=⍳64)eng.Play k eng.Tr b}¨⍸eng.Moves b)}¨1+⍳7}¨3 Positions 5}
+    TestDiff←{Diff 42 Positions 5}
+    TestEnd←{ ⍝ oracle double-no-move fixture: c1 takes b1 and ends the game 3–0 with 61 empties
+        b←0 eng.Bd 1
+        ∧/(6400 2≡(eng.Wide 1)eng.Search b ⋄ 6400 2≡(eng.Wide 3)eng.Search b ⋄ eng.Terminal 2 eng.Play b)
+    }
+    TestEngine←{ ⍝ depth-2 alpha-beta beats a (seeded) random player from both colours
+        ⎕RL←23 ⋄ r←?10 70⍴0
+        G←{f←⍵ ⋄ R←{s←⍸eng.Moves 1⊃⍵ ⋄ s[⌊(≢s)×f[+/,1⊃⍵]]} ⋄ ⍺:0<eng.Result((2 eng.AB)eng.Game R)0 eng.start ⋄ 0>eng.Result(R eng.Game(2 eng.AB))0 eng.start}
+        8≤+/(10↑5⍴1)G¨↓r
+    }
+    TestEval2←{¯1024 728 ¯1029 535 ¯832 338 ¯634 ¯255≡#.Baseline.Eval↑8↑Corp 0} ⍝ the frozen baseline stays frozen (snapshot)
+    TestFixtures←{ ⍝ oracle tests/perft.rs fixtures and WTHOR scoring
+        p←9 eng.Bd 0 2 ⋄ t←0 2 4 6 eng.Bd 1 3 5 7
+        ∧/(
+            1 2≡1 2 eng.Perft¨⊂p                    ⍝ the side to move must pass; the opponent has two replies
+            1 1≡1 5 eng.Perft¨⊂t                    ⍝ an early (tied) end counts one at any depth
+            eng.Terminal t
+            0=eng.Score t
+            62 ¯62≡eng.Score¨(0 1 eng.Bd 2)(2 eng.Bd 0 1)   ⍝ empties go to the winner
+            1=0 eng.Perft eng.start
+        )
+    }
+    TestGame←{g←(eng.Rnd eng.Game eng.Rnd)0 eng.start ⋄ ∧/(eng.Terminal 1⊃g ⋄ 64≥|eng.Result g)}
+    TestHarness←{ ⍝ Phase 3 harness
+        o←4↑eng.Data'openTune' ⋄ m←((2 eng.AB)eng.Match(2 eng.AB))o
+        r←40÷⍨+/,(1 eng.RA)eng.Match(2 eng.RA)20↑eng.Data'openVal'
+        Bad←{¯1} ⋄ Ill←{64}
+        ∧/(
+            ∧/0.5=2÷⍨+/m                         ⍝ equal deterministic agents score exactly ½ per pair
+            m≡((2 eng.AB)eng.Match(2 eng.AB))o               ⍝ matches repeat exactly
+            (r≥0.25)∧r≤0.75                      ⍝ random against random: sanity
+            {11::1 ⋄ 0⊣(Bad eng.Pair eng.Greedy)⊃↓o}0    ⍝ stopping while legal moves exist aborts
+            {11::1 ⋄ 0⊣(Ill eng.Pair eng.Greedy)⊃↓o}0    ⍝ an illegal square aborts
+        )
+    }
+    TestInvariants←{∧/{b←⍵ ⋄ ∧/{f←⍵ eng.Flips b ⋄ c←⍵ eng.Play b ⋄ ∧/(~∨/∧⌿c ⋄ (+/,c)=1++/,b ⋄ ∨/f ⋄ (+/c[0;])=(+/b[1;])-+/f)}¨⍸eng.Moves b}¨7 Positions 20}
+    TestLeaf←{ ⍝ Leaf on a normal, a forced-pass and a finished board, without assuming Eval is antisymmetric
+        b←↑eng.start(9 eng.Bd 0 2)(0 1 2 eng.Bd ⍬)
+        (eng.Eval eng.Leaf b)≡(eng.Eval eng.start),(-eng.Eval 0 2 eng.Bd 9),6400
+    }
+    TestMinimax←{ ⍝ full-window Search ≡ plain minimax at depths 0–4, including a forced pass and a move that ends the game
+        b←(13 Positions 2)[10×⍳4],(9 eng.Bd 0 2)(0 eng.Bd 1)
+        ∧/,(⍳5)∘.{(⍺ MM ⍵)=⊃(eng.Wide ⍺)eng.Search ⍵}b
+    }
+    TestOracle←{ ⍝ Eval and Search depths 1–3 match the Rust oracle's evaluate and negamax (oracleBoards, oracleValues in data.dcf, generated by its crate)
+        b←eng.Data'oracleBoards'
+        v←(eng.Eval b),⍉↑{⊃¨(eng.Wide ⍵)∘eng.Search¨⊂[1 2]b}¨1 2 3
+        v≡eng.Data'oracleValues'
+    }
+    TestPerft←{4 12 56 244 1396 8200 55092 390216≡(1+⍳8)eng.Perft¨⊂eng.start}
+    TestShift←{∧/{(eng.S 8 64⍴⍵=⍳64)≡↑{(⍳64)∊⍵↑⍨1⌊≢⍵}¨(⊂8 8⊤⍵)NRay¨↓eng.dirs}¨⍳64}
+    TestShow←{ ⍝ start picture matches the oracle; Parse inverts Show for both colours
+        e←[' abcdefgh'
+           '8........'
+           '7........'
+           '6........'
+           '5...XO...'
+           '4...OX...'
+           '3........'
+           '2........'
+           '1........'
+           'Black to move. Black 2, White 2, legal: d3 c4 f5 e6']
+        p←3 Positions 3
+        ∧/(e≡eng.Show 0 eng.start ⋄ ∧/(2|⍳≢p){(⍺ ⍵)≡eng.Parse eng.Show ⍺ ⍵}¨p)
+    }
+    TestSolve←{ ⍝ Phase 6 solver
+        forever←⌊/⍬ ⋄ g←{⍵/⍨6={+/~∨⌿⍵}¨⍵}{⍵/⍨{∨/eng.Moves ⍵}¨⍵}31 Positions 12 ⋄ s←{forever 64 0 14 eng.Think ⍵}¨g
+        b←⊃g/⍨0≠1⊃¨s ⋄ v←1⊃forever 64 0 14 eng.Think b
+        tab←eng.New 20 ⋄ w←⊃(tab,⍨6 ¯1 1)eng.Search b ⋄ k←tab.n            ⍝ win/draw/loss into tab
+        cold←eng.New 20 ⋄ c←⊃(cold,⍨eng.Wide 6)eng.Search b
+        r←⊃(tab,⍨6,¯1 1×1⌈eng.inf×w×¯1 1)eng.Search b                     ⍝ exact, reusing tab's bounds
+        p←forever 64(k+1)14 eng.Think b
+        ∧/(
+            ∧/{0 1≡⍵[4 5]}¨s                     ⍝ complete and solved
+            (1⊃¨s)≡{6 MM ⍵}¨g                    ⍝ = plain minimax (exact at 6 empties)
+            (×w)=×v                              ⍝ win/draw/loss has the exact value's sign
+            1 0≡p[4 5]                           ⍝ out of nodes just after win/draw/loss: partial, not solved,
+            (×1⊃p)=×v ⋄ (⊃p)∊⍸eng.Moves b            ⍝ right sign, legal move
+            2 0≡(forever 64 2 14 eng.Think b)[4 5]   ⍝ out of nodes inside win/draw/loss: fallback
+            r=c ⋄ (tab.n-k)<cold.n               ⍝ reused bounds: same value, fewer nodes
+        )
+    }
+    TestSplits←{s x←eng.Splits eng.Data¨'openTune' 'openVal' 'openFinal' ⋄ ∧/(x=0 ⋄ s[;0 1 2 4]≡3 4⍴512 0 8 1 ⋄ ∧/s[;3]≥20)} ⍝ frozen opening sets: oracle's split rules
+    TestSq←{∧/(0 63 19 ¯1 ¯1 ¯1 ¯1≡eng.Sq¨'a1' 'h8' 'd3' 'i1' 'a9' 'a' 'a10' ⋄ (⍳64)≡eng.Sq¨eng.Name¨⍳64)}
+    TestStart←{∧/(eng.start≡(eng.Sq¨'d5' 'e4')eng.Bd eng.Sq¨'d4' 'e5' ⋄ (⍸eng.Moves eng.start)≡{⍵[⍋⍵]}eng.Sq¨'c4' 'd3' 'e6' 'f5')} ⍝ built from coordinates, not the constant
+    TestStats←{ ⍝ oracle stats policy
+        f←1 eng.Boot 10⍴1 ⋄ b←1 eng.Boot 20⍴1 0.5 0 1
+        ∧/(
+            ⍬≡1 eng.Boot ⍬                           ⍝ no pairs: insufficient
+            0.5 0 1 0≡1 eng.Boot,0.5                 ⍝ one pair: Hoeffding, uninformative
+            (1 1 0≡f[0 2 3])∧1>1⊃f               ⍝ zero variance: Hoeffding, uninformative
+            (1=3⊃b)∧</b[1 0 2]                   ⍝ bootstrap: informative, low < mean < high
+            b≡1 eng.Boot 20⍴1 0.5 0 1                ⍝ seeded: repeatable
+            ~∨/'Elo'⍷1 eng.Report 10 2⍴1             ⍝ no Elo from an end at 0 or 1
+            ∨/'Elo'⍷1 eng.Report 20 2⍴1 0 0.5 1      ⍝ Elo from finite ends
+        )
+    }
+    TestTT←{ ⍝ the table never changes a value: cold, warm, deep-then-shallow, and a 1-slot table where every key collides
+        ∧/{b←⍵ ⋄ v←{⊃(eng.Wide ⍵)eng.Search b}¨4 3 4 ⋄ tab←eng.New 16 ⋄ one←eng.New 0
+            ∧/(v≡{⊃(tab,⍨eng.Wide ⍵)eng.Search b}¨4 3 4 ⋄ v≡{⊃(one,⍨eng.Wide ⍵)eng.Search b}¨4 3 4)}¨(11 Positions 2)[15×⍳4]
+    }
+    TestThink←{ ⍝ Phase 4 (solver off: threshold 0)
+        p←(11 Positions 2)[15×⍳4] ⋄ b←⊃p ⋄ forever←⌊/⍬
+        r←forever 64 300∘eng.Think¨b b
+        t←⎕AI[2] ⋄ s←50 eng.Think b ⋄ ms←⎕AI[2]-t
+        e←⊃(11 Positions 1)[50] ⋄ x←forever 64 0 0 eng.Think e
+        ∧/(
+            ∧/{(⊃(eng.Wide 4)eng.Search ⍵)=1⊃forever 4 0 0 eng.Think ⍵}¨p   ⍝ iterative deepening ≡ fixed depth
+            ((⊃⍸eng.Moves b),(eng.Eval b),0 0 2 0)≡0 eng.Think b             ⍝ time 0: fallback
+            ≡/r ⋄ (4⊃⊃r)∊1 2 ⋄ (⊃⊃r)∊⍸eng.Moves b                    ⍝ node limit: repeatable, partial or fallback, legal
+            ms≤100 ⋄ (⊃s)∊⍸eng.Moves b                               ⍝ 50 ms: on time, legal
+            (0=4⊃x)∧(2⊃x)=+/~∨⌿e                                 ⍝ stops, complete, at depth = empties
+        )
+    }
+    TestWindow←{ ⍝ fail-soft: a result ≤α is an upper bound, ≥β a lower bound, otherwise exact; depth 1 is always exact
+        ws←[¯300 ¯50 ⋄ ¯50 50 ⋄ 50 300 ⋄ ¯1 1 ⋄ ¯300 300 ⋄ 10 20 ⋄ ¯20 ¯10]   ⍝ windows around the true value t
+        ∧/∊{b←⍵ ⋄ ∊1 3∘.{t←⊃(eng.Wide ⍺)eng.Search b ⋄ a z←t+⍵ ⋄ r←⊃(⍺ a z)eng.Search b
+            ∧/(r≤a)(z≤r)((a<r)∧r<z)(⍺=1)≤(t≤r)(r≤t)(r=t)(r=t)}↓ws}¨(17 Positions 2)[8×⍳6]  ⍝ p≤q: p implies q
+    }
+:EndNamespace
