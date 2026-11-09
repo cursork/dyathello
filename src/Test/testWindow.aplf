@@ -1,0 +1,5 @@
+testWindow←{ ⍝ fail-soft: a result ≤α is an upper bound, ≥β a lower bound, otherwise exact; depth 1 is always exact
+    W←(¯300 ¯50)(¯50 50)(50 300)(¯1 1)(¯300 300)(10 20)(¯20 ¯10)
+    ∧/∊{b←⍵ ⋄ ∊1 3∘.{t←⊃(⍺,(-##.INF),##.INF)##.Search b ⋄ a z←t+⍵ ⋄ r←⊃(⍺ a z)##.Search b
+        ((r>a)∨t≤r)∧((r<z)∨t≥r)∧((r≤a)∨(r≥z)∨r=t)∧(⍺>1)∨r=t}W}¨(17 Positions 2)[8×⍳6]
+}

@@ -1,0 +1,1 @@
+Pair←{g←Replay ⍵ ⋄ (Pts(⍺⍺ Duel ⍵⍵)g),1-Pts(⍵⍵ Duel ⍺⍺)g} ⍝ A ≡ ⍺⍺'s points from opening ⍵ as Black, then as White

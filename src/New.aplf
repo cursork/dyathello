@@ -1,0 +1,8 @@
+New←{ ⍝ empty table with 2*⍵ slots: key (¯1 empty), value, depth, bound (0 exact, 1 lower, 2 upper), move;
+    ⍝ plus limits and counters: dl deadline (⎕AI[2] ms), mx node limit (0 none), n nodes so far;
+    ⍝ configuration (oracle SearchConfig): En namespace whose Eval is the evaluator, ord move ordering, tt table probes and stores
+    t←⎕NS'' ⋄ s←2*⍵
+    t.(N K V D F Mv)←s(s⍴¯1)(s⍴0)(s⍴¯1)(s⍴0)(s⍴¯1)
+    t.(dl mx n ord tt)←(⌊/⍬)0 0 1 1 ⋄ t.En←⎕THIS
+    t
+}

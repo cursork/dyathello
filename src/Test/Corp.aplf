@@ -1,0 +1,1 @@
+Corp←{⊂[1 2]'1'=(≢Corpus)2 64⍴↑Corpus} ⍝ corpus boards: 0–11 midgame (28–40 empties), 12–19 late (12–16), 20–25 with a move that forces a pass

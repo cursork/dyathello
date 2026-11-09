@@ -1,0 +1,1 @@
+Div←{(×q)×⌊|q←⍺÷⍵} ⍝ integer division truncating toward zero, like Rust

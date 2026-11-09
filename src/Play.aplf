@@ -1,0 +1,1 @@
+Play←{f←⍺ Flips ⍵ ⋄ ⊖⍤2⊢⍵≠(f∨⍺∘.=⍳64),[¯0.5]⍤1⊢f} ⍝ play squares ⍺ on boards ⍵; results are from the opponent's view

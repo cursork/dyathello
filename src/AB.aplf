@@ -1,0 +1,1 @@
+AB←{1⊃(⍺⍺,(-INF),INF)Search 1⊃⍵} ⍝ agent: alpha-beta to depth ⍺⍺

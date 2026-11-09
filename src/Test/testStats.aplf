@@ -1,0 +1,9 @@
+testStats←{ ⍝ oracle stats policy: no pairs; one pair; zero variance; bootstrap; Elo only from finite endpoints
+    H←##.Tools
+    z←⍬≡1 H.Boot ⍬
+    one←0.5 0 1 0≡1 H.Boot,0.5
+    f←1 H.Boot 10⍴1 ⋄ flat←(1 1 0≡f[0 2 3])∧1>1⊃f
+    b←1 H.Boot 20⍴1 0.5 0 1 ⋄ boot←(1=3⊃b)∧(</b[1 0 2])∧b≡1 H.Boot 20⍴1 0.5 0 1
+    e←(~∨/'Elo'⍷1 H.Report 10 2⍴1)∧∨/'Elo'⍷1 H.Report 20 2⍴1 0 0.5 1
+    z∧one∧flat∧boot∧e
+}

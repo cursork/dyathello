@@ -1,0 +1,1 @@
+Result←{c b←⍵ ⋄ (¯1*c)×Score b} ⍝ Black's WTHOR margin of finished game ⍵

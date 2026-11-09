@@ -1,0 +1,1 @@
+Pts←{0.5×1+×##.Result ⍵} ⍝ Black's points for finished game ⍵: win 1, draw ½, loss 0

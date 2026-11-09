@@ -1,0 +1,10 @@
+Perft←{ ⍝ leaf count to depth ⍺ from board(s) ⍵, a ply at a time; a pass is a ply, a terminal node counts 1
+    b←(¯3↑1,⍴⍵)⍴⍵
+    ⍺=0:≢b
+    m←Moves b
+    ⍺=1:+/1⌈+/m
+    i s←↓0 64⊤⍸,m
+    p←⊖⍤2⊢b⌿⍨~∨/m
+    t←~∨/Moves p
+    (+/t)+(⍺-1)∇(s Play b[i;;])⍪p⌿⍨~t
+}

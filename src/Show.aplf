@@ -1,0 +1,5 @@
+Show←{ ⍝ picture of game ⍵ ≡ colour board (colour 0: Black to move), in the oracle's format
+    c b←⍵ ⋄ k←⊖⍣c⊢b
+    g←'87654321',⊖8 8⍴'.XO'[1 2+.×k]
+    ↑(⊂' abcdefgh'),(↓g),⊂(c⊃'Black' 'White'),' to move. Black ',(⍕+/k[0;]),', White ',(⍕+/k[1;]),', legal:',∊' ',¨Name¨⍸Moves b
+}

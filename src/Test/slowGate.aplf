@@ -1,0 +1,5 @@
+slowGate←{ ⍝ oracle Phase 3 gate: phase2 vs greedy, 200 pairs, seed 1, reproducible with a valid interval → report, repeat identical
+    H←##.Tools ⋄ o←200↑H.OpenTune
+    m←((4 H.P2)H.Match H.Greedy)o
+    (1 H.Report m)(m≡((4 H.P2)H.Match H.Greedy)o)
+}

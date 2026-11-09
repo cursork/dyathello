@@ -1,0 +1,1 @@
+testGame←{⎕RL←5 ⋄ g←(##.Rnd ##.Game ##.Rnd)0 ##.Start ⋄ (##.Terminal 1⊃g)∧64≥|##.Result g}

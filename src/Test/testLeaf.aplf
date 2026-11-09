@@ -1,0 +1,4 @@
+testLeaf←{ ⍝ Leaf on a normal, a forced-pass and a finished board, without assuming Eval is antisymmetric
+    b←↑##.Start(9 ##.Bd 0 2)(0 1 2 ##.Bd ⍬)
+    (##.Eval ##.Leaf b)≡(##.Eval ##.Start),(-##.Eval 0 2 ##.Bd 9),6400
+}

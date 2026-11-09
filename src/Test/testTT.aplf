@@ -1,0 +1,5 @@
+testTT←{ ⍝ the table never changes a value: cold, warm, deep-then-shallow, and a 1-slot table where every key collides
+    p←(11 Positions 2)[15×⍳4] ⋄ W←{⍵,(-##.INF),##.INF}
+    ∧/{b←⍵ ⋄ v←{⊃(W ⍵)##.Search b}¨4 3 4 ⋄ T←##.New 16 ⋄ C←##.New 0
+        (v≡{⊃((W ⍵),T)##.Search b}¨4 3 4)∧v≡{⊃((W ⍵),C)##.Search b}¨4 3 4}¨p
+}

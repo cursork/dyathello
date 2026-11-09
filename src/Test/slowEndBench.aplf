@@ -1,0 +1,6 @@
+slowEndBench←{ ⍝ empties ⍵ → per count: positions, solved within 5 s, median, p90, max ms (10 positions each, seed 41)
+    g←{⍵/⍨{∨/##.Moves ⍵}¨⍵}41 Positions 30
+    ↑{e←⍵ ⋄ p←10↑g/⍨e={+/~∨⌿⍵}¨g
+        r←{t←⎕AI[2] ⋄ x←5000 64 0 14 ##.Think ⍵ ⋄ (5⊃x),⎕AI[2]-t}¨p
+        s←{⍵[⍋⍵]}1⊃¨r ⋄ e(≢p)(+/⊃¨r),s[⌊0.5+(¯1+≢s)×0.5 0.9 1]}¨⍵
+}

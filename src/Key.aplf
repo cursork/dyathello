@@ -1,0 +1,1 @@
+Key←{(((¯2↓⍴⍵),128)⍴⍵)+.×Z} ⍝ hash of each board: sum of random 45-bit numbers over its 128 bits, exact below 2*53

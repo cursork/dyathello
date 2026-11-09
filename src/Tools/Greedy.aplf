@@ -1,0 +1,1 @@
+Greedy←{b←1⊃⍵ ⋄ s←⍸##.Moves b ⋄ s[⊃⍒+/(s ##.Play(≢s)2 64⍴b)[;1;]]} ⍝ agent: most discs after the move, lowest square on ties

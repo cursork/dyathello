@@ -1,0 +1,1 @@
+slowPerft←{3005288 24571284≡9 10 ##.Perft¨⊂##.Start}

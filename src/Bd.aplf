@@ -1,0 +1,1 @@
+Bd←{⍉(⍳64)∘.∊⍺ ⍵} ⍝ board from my squares ⍺ and opponent squares ⍵

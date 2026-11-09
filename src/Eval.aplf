@@ -1,0 +1,12 @@
+Eval←{ ⍝ oracle evaluate in centidiscs (±6400) for each board (…,2,64): table, mobility, frontier, corner risk, blended by phase
+    ⍝ ⍺ (optional): move counts of the side to move and of the opponent
+    ⍺←(+/Moves ⍵)(+/Moves⊖⍤2⊢⍵) ⋄ a t←⍺
+    m←0⌷⍤2⊢⍵ ⋄ o←1⌷⍤2⊢⍵ ⋄ e←~m∨o ⋄ d←m-o
+    p←⌊1000×(60-12⌈60⌊+/e)÷48
+    B←{⍵[0]+(p×-/⌽⍵)Div 1000}
+    v←d+.×W
+    v+←((B 500 800)×((a-t)×1000)Div a+t+1)Div 1000
+    v-←(B 10 4)×+/d×∨⌿⍤2⊢S 8 64∘⍴⍤1⊢e
+    v-←((B 1000 700)×+/(e+.×H)×d+.×Q)Div 1000
+    6400⌊¯6400⌈v
+}

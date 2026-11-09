@@ -1,0 +1,1 @@
+Elo←{400×10⍟⍵÷1-⍵} ⍝ rating difference for expected score ⍵

@@ -1,0 +1,1 @@
+Eval←{⍺←0 ⋄ m←0⌷⍤2⊢⍵ ⋄ o←1⌷⍤2⊢⍵ ⋄ 6400⌊¯6400⌈(100×(+/m)-+/o)+(m-o)+.×W} ⍝ frozen phase-2 baseline (oracle eval_phase2): discs×100 + table W; ⍺ (move counts) ignored

@@ -1,0 +1,19 @@
+Think←{ ⍝ ⍺ ≡ ms [depth [nodes [threshold]]]: search board ⍵ (with a legal move) within limits
+    ⍝ → square value depth nodes status solved; status 0 complete, 1 partial (a limit stopped later work),
+    ⍝   2 fallback (nothing completed: first legal move, static value). Depth 0 for an exact solve.
+    ⍝ At most threshold (default 12: 12-empty solves finish within 5 s here, 14-empty mostly do not) empties: root-only solve, win/draw/loss first, then the exact margin.
+    ⍝ Otherwise iterative deepening, stopping at depth ≥ empties (exact: passes cost no depth).
+    ⍝ A search to depth ≥ empties sees only finished games, so solving is Search with depth = empties.
+    ms n x th←4↑⍺,(≢⍺)↓0 64 0 12
+    T←New 20 ⋄ T.(dl mx)←(⎕AI[2]+ms)x ⋄ b←⍵ ⋄ e←+/~∨⌿b
+    f←(⊃⍸Moves b)(T.En.Eval b)0 0 2 0
+    e≤th:{
+        w←{999::f ⋄ v s←(e,¯1 1,T)Search b ⋄ s v 0 T.n 1 0}0
+        2=4⊃w:w
+        a z←((-INF)0)(¯1 1)(0 INF)⊃⍨1+×1⊃w
+        999::w ⋄ v s←(e,a,z,T)Search b ⋄ s v 0 T.n 0 1
+    }0
+    n⌊←e
+    G←{d r←⍵ ⋄ d>n:r ⋄ 999::r ⋄ v s←(d,(-INF),INF,T)Search b ⋄ ∇(d+1)(s v d T.n(d<n)0)}
+    G 1 f
+}

@@ -1,0 +1,13 @@
+testSolve←{ ⍝ Phase 6: solve ≡ plain minimax at 6 empties; win/draw/loss first; partial after WDL; fallback inside WDL; WDL bounds reused
+    I←⌊/⍬ ⋄ g←{⍵/⍨6={+/~∨⌿⍵}¨⍵}{⍵/⍨{∨/##.Moves ⍵}¨⍵}31 Positions 12
+    s←{I 64 0 14 ##.Think ⍵}¨g
+    ex←∧/({0 1≡⍵[4 5]}¨s)∧(1⊃¨s)={6 MM ⍵}¨g  ⍝ complete, solved, value = 6-ply minimax (exact at 6 empties)
+    b←⊃g/⍨0≠1⊃¨s ⋄ v←1⊃I 64 0 14 ##.Think b
+    T←##.New 20 ⋄ w←⊃(6,¯1 1,T)##.Search b ⋄ wd←(×w)=×v ⋄ k←T.n
+    p←I 64(k+1)14 ##.Think b ⋄ pa←(1 0≡p[4 5])∧((×1⊃p)=×v)∧(⊃p)∊⍸##.Moves b
+    fb←2 0≡(I 64 2 14 ##.Think b)[4 5]
+    C←##.New 20 ⋄ c←(6,(-##.INF),##.INF,C)##.Search b
+    r←⊃(6,(((-##.INF)0)(¯1 1)(0 ##.INF)⊃⍨1+×w),T)##.Search b
+    ru←(r=⊃c)∧(T.n-k)<C.n
+    ex∧wd∧pa∧fb∧ru
+}
