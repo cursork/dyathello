@@ -266,7 +266,7 @@
         v≡Data'OracleV'
     }
     testPerft←{4 12 56 244 1396 8200 55092 390216≡(1+⍳8)Perft¨⊂Start}
-    testShift←{D←(0 1)(0 ¯1)(1 0)(¯1 0)(1 1)(1 ¯1)(¯1 1)(¯1 ¯1) ⋄ ∧/{(S 8 64⍴⍵=⍳64)≡↑{(⍳64)∊⍵↑⍨1⌊≢⍵}¨(⊂8 8⊤⍵)NRay¨D}¨⍳64}
+    testShift←{∧/{(S 8 64⍴⍵=⍳64)≡↑{(⍳64)∊⍵↑⍨1⌊≢⍵}¨(⊂8 8⊤⍵)NRay¨↓D}¨⍳64}
     testShow←{ ⍝ start picture matches the oracle; Parse inverts Show for both colours
         e←↑' abcdefgh' '8........' '7........' '6........' '5...XO...' '4...OX...' '3........' '2........' '1........' 'Black to move. Black 2, White 2, legal: d3 c4 f5 e6'
         (e≡Show 0 Start)∧∧/(2|⍳≢p){(⍺ ⍵)≡Parse Show ⍺ ⍵}¨p←3 Positions 3
@@ -320,9 +320,9 @@
 
 ⍝ ─── Constants
     INF←1000000
-    D←(0 1)(0 ¯1)(1 0)(¯1 0)(1 1)(1 ¯1)(¯1 1)(¯1 ¯1)               ⍝ directions (Δrank Δfile): E W N S NE NW SE SW
-    K←-8⊥¨D                                                         ⍝ rotation that shifts a square one step in each direction
-    M←↑{∧⌿(0≤x)∧8>x←(8 8⊤⍳64)-⍤1 0⊢⍵}¨D                            ⍝ squares a step can land on without wrapping
+    D←[0 1 ⋄ 0 ¯1 ⋄ 1 0 ⋄ ¯1 0 ⋄ 1 1 ⋄ 1 ¯1 ⋄ ¯1 1 ⋄ ¯1 ¯1]        ⍝ directions (Δrank Δfile): E W N S NE NW SE SW
+    K←-D+.×8 1                                                        ⍝ rotation that shifts a square one step in each direction
+    M←{∧⌿(0≤x)∧8>x←(8 8⊤⍳64)-⍤1 0⊢⍵}⍤1⊢D                           ⍝ squares a step can land on without wrapping
     W←[100 ¯1 10 5 5 10 ¯1 100 ⋄ ¯1 ¯1 ¯2 ¯2 ¯2 ¯2 ¯1 ¯1 ⋄ 10 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2 10 ⋄ 5 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2 5
        5 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2 5 ⋄ 10 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2 10 ⋄ ¯1 ¯1 ¯2 ¯2 ¯2 ¯2 ¯1 ¯1 ⋄ 100 ¯1 10 5 5 10 ¯1 100]   ⍝ oracle square weights
     H←(⍳64)∘.=0 7 56 63                                              ⍝ corners
