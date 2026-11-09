@@ -102,8 +102,9 @@
     mask←{∧⌿(0≤x)∧8>x←(8 8⊤⍳64)-⍤1 0⊢⍵}⍤1⊢dirs                           ⍝ squares a step can land on without wrapping
     weights←[100 ¯1 10 5 5 10 ¯1 100 ⋄ ¯1 ¯1 ¯2 ¯2 ¯2 ¯2 ¯1 ¯1 ⋄ 10 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2 10 ⋄ 5 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2 5
        5 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2 5 ⋄ 10 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2 10 ⋄ ¯1 ¯1 ¯2 ¯2 ¯2 ¯2 ¯1 ¯1 ⋄ 100 ¯1 10 5 5 10 ¯1 100]   ⍝ oracle square weights
-    corners←(⍳64)∘.=0 7 56 63                                              ⍝ corners
-    risk←((49×(⍳64)∊9 14 49 54)+19×(⍳64)∊1 6 8 15 48 55 57 62)×⍤0 1⊢((7×4≤8|⍳64)+56×4≤⌊8÷⍨⍳64)∘.=0 7 56 63  ⍝ X/C penalty per square, by its corner
+    corners←(⍳64)∘.=0 7 56 63                                         ⍝ 64×4: which square is which corner
+    near←((7×4≤8|⍳64)+56×4≤⌊8÷⍨⍳64)∘.=0 7 56 63                       ⍝ 64×4: each square's own corner (by quadrant)
+    risk←near×⍤1 0⊢((⍳64)∘.∊(9 14 49 54)(1 6 8 15 48 55 57 62))+.×49 19  ⍝ X-squares cost 49, C-squares 19, while their corner is empty
     zobrist←{⎕RL←20261109 ⋄ ?128⍴2*45}0                                   ⍝ hash keys
     start←28 35 Bd 27 36                                             ⍝ Black on d5 e4, White on d4 e5, Black to move
 :EndNamespace
