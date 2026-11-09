@@ -4,7 +4,7 @@
 
 ⍝ ─── Board and moves: a board is 2 64⍴ boolean [me;opp], square i = 8⊥rank file, a1 = 0
     Bd←{⍉(⍳64)∘.∊⍺ ⍵} ⍝ board from my squares ⍺ and opponent squares ⍵
-    Sides←{0 1(⌷⍤0 2)¨⊂⍵} ⍝ boards (…,2,64) → mine theirs, each (…,64)
+    Sides←0 1(⌷⍤0 2)¨⊂ ⍝ boards (…,2,64) → mine theirs, each (…,64)
     S←{(M⍴⍨⍴⍵)∧(K⍴⍨¯1↓⍴⍵)⌽⍵} ⍝ shift each (…,8,64) direction row one step; edges fall off
     Run←{O←8 64∘⍴⍤1⊢⍺ ⋄ {⍵∨O∧S ⍵}⍣≡O∧S 8 64∘⍴⍤1⊢⍵} ⍝ (…,8,64): per direction, contiguous discs ⍺ reached from ⍵
     Moves←{m o←Sides ⍵ ⋄ (~m∨o)∧∨⌿⍤2⊢S o Run m} ⍝ legal moves for each board (…,2,64)
@@ -47,7 +47,7 @@
     Result←{c b←⍵ ⋄ (¯1*c)×Score b} ⍝ Black's WTHOR margin of finished game ⍵
 
 ⍝ ─── Evaluation and search (scores in centidiscs)
-    Div←{(×q)×⌊|q←⍺÷⍵} ⍝ integer division truncating toward zero, like Rust
+    Div←(××⌊⍤|)÷ ⍝ integer division truncating toward zero, like Rust
     Eval←{ ⍝ oracle evaluate in centidiscs (±6400) for each board (…,2,64): table, mobility, frontier, corner risk, blended by phase
         ⍝ ⍺ (optional): move counts of the side to move and of the opponent
         ⍺←+/∘Moves¨⍵(⊖⍤2⊢⍵) ⋄ a t←⍺
