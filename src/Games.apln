@@ -1,6 +1,6 @@
 :Namespace Games
 ⍝ Squares, pictures, the game loop and agents. A game is colour board (colour 0: Black to move).
-⍝ An agent maps a game to a square (¯1 stops): (A Game B) 0 eng.start plays A as Black.
+⍝ An agent maps a game to a square (¯1 stops): (A _Game_ B) 0 eng.start plays A as Black.
     ⎕IO←0
     eng←#.Othello
     Name←{r f←8 8⊤⍵ ⋄ 'abcdefgh'[f],⎕D[1+r]} ⍝ square ⍵ as 'd3'
@@ -11,7 +11,7 @@
         ↑(⊂' abcdefgh'),(↓g),⊂(c⊃'Black' 'White'),' to move. Black ',(⍕+/k[0;]),', White ',(⍕+/k[1;]),', legal:',∊' ',¨Name¨⍸eng.Moves b
     }
     Parse←{c←'W'=⊃⍵[9;] ⋄ c(⊖⍣c⊢'XO'∘.=,⊖⍵[1+⍳8;1+⍳8])} ⍝ game from its picture; inverse of Show
-    Game←{ ⍝ agent ⍺⍺ moves now, ⍵⍵ next; ⍵ is (colour board); an agent maps a game to a square, or ¯1 to stop
+    _Game_←{ ⍝ agent ⍺⍺ moves now, ⍵⍵ next; ⍵ is (colour board); an agent maps a game to a square, or ¯1 to stop
         c b←⍵
         eng.Terminal b:⍵
         ~∨/eng.Moves b:(⍵⍵ ∇∇ ⍺⍺)(~c)(⊖b)
@@ -24,6 +24,6 @@
     Human←{⎕←Show ⍵ ⋄ x←⎕C(' '≠x)/x←⍞ ⋄ x≡,'q':¯1 ⋄ s←Sq x ⋄ s∊⍸eng.Moves 1⊃⍵:s ⋄ ⎕←'Illegal move' ⋄ ∇⍵} ⍝ agent: ask at the keyboard; q quits
     Result←{c b←⍵ ⋄ (¯1*c)×eng.Score b} ⍝ Black's WTHOR margin of finished game ⍵
 
-    AB←{1⊃(eng.Wide ⍺⍺)eng.Search 1⊃⍵} ⍝ agent: alpha-beta to depth ⍺⍺
-    TH←{⊃⍺⍺ eng.Think 1⊃⍵} ⍝ agent: iterative deepening within limits ⍺⍺ ≡ ms [depth [nodes]]
+    _AB←{1⊃(eng.Wide ⍺⍺)eng.Search 1⊃⍵} ⍝ agent: alpha-beta to depth ⍺⍺
+    _TH←{⊃⍺⍺ eng.Think 1⊃⍵} ⍝ agent: iterative deepening within limits ⍺⍺ ≡ ms [depth [nodes]]
 :EndNamespace

@@ -1,10 +1,10 @@
 :Namespace Harness
 ⍝ Match harness (oracle Phase 3): agents, opening replay, colour-swapped pairs, statistics, opening-set splits.
-⍝ (A Match B) openings → per pair, A's points as Black then White; seed Report result → one line of text.
+⍝ (A _Match_ B) openings → per pair, A's points as Black then White; seed Report result → one line of text.
     ⎕IO←0
     eng←#.Othello
     gm←#.Games
-    RA←{b←1⊃⍵ ⋄ s←⍸eng.Moves b ⋄ ⎕RL←1+2147483646|⍺⍺+eng.Key b ⋄ s[?≢s]} ⍝ agent (seed RA): random move, reproducible from seed and position
+    _RA←{b←1⊃⍵ ⋄ s←⍸eng.Moves b ⋄ ⎕RL←1+2147483646|⍺⍺+eng.Key b ⋄ s[?≢s]} ⍝ agent (seed _RA): random move, reproducible from seed and position
     Greedy←{b←1⊃⍵ ⋄ s←⍸eng.Moves b ⋄ s[⊃⍒+/(s eng.Play(≢s)2 64⍴b)[;1;]]} ⍝ agent: most discs after the move, lowest square on ties
     Replay←{ ⍝ game after opening squares ⍵ from game ⍺ (default: start, Black to move); colour toggles on placements and passes
         ⍺←0 eng.start ⋄ 0=≢⍵:⍺ ⋄ c b←⍺
@@ -14,13 +14,13 @@
         'illegal opening move'⎕SIGNAL 11
     }
     Done←{eng.Terminal 1⊃⍵:⍵ ⋄ 'agent stopped with legal moves'⎕SIGNAL 11} ⍝ a match game must be played to the end
-    Duel←{ ⍝ agent ⍺⍺ plays Black, ⍵⍵ White, from game ⍵ → finished game
-        ⊃⍵:Done(⍵⍵ gm.Game ⍺⍺)⍵
-        Done(⍺⍺ gm.Game ⍵⍵)⍵
+    _Duel_←{ ⍝ agent ⍺⍺ plays Black, ⍵⍵ White, from game ⍵ → finished game
+        ⊃⍵:Done(⍵⍵ gm._Game_ ⍺⍺)⍵
+        Done(⍺⍺ gm._Game_ ⍵⍵)⍵
     }
     Pts←{0.5×1+×gm.Result ⍵} ⍝ Black's points for finished game ⍵: win 1, draw ½, loss 0
-    Pair←{g←Replay ⍵ ⋄ (Pts(⍺⍺ Duel ⍵⍵)g),1-Pts(⍵⍵ Duel ⍺⍺)g} ⍝ A ≡ ⍺⍺'s points from opening ⍵ as Black, then as White
-    Match←{↑(⍺⍺ Pair ⍵⍵)¨↓⍵} ⍝ agents ⍺⍺ (A) and ⍵⍵ (B) over openings ⍵ (one per row) → per pair: A's points in its two games
+    _Pair_←{g←Replay ⍵ ⋄ (Pts(⍺⍺ _Duel_ ⍵⍵)g),1-Pts(⍵⍵ _Duel_ ⍺⍺)g} ⍝ A ≡ ⍺⍺'s points from opening ⍵ as Black, then as White
+    _Match_←{↑(⍺⍺ _Pair_ ⍵⍵)¨↓⍵} ⍝ agents ⍺⍺ (A) and ⍵⍵ (B) over openings ⍵ (one per row) → per pair: A's points in its two games
     Boot←{ ⍝ seed ⍺; pair scores ⍵ → mean low high informative (oracle stats policy); ⍬ if no pairs
         n←≢⍵ ⋄ n=0:⍬
         m←n÷⍨+/⍵ ⋄ v←n÷⍨+/2*⍨⍵-m
@@ -29,7 +29,7 @@
         m,r[⌊0.5+9999×0.025 0.975],1  ⍝ percentile pair bootstrap, 10 000 resamples
     }
     Elo←{400×10⍟⍵÷1-⍵} ⍝ rating difference for expected score ⍵
-    Report←{ ⍝ seed ⍺; Match result ⍵ → text: pairs, W/D/L, mean pair score with interval, Elo range when both ends are inside (0,1)
+    Report←{ ⍝ seed ⍺; _Match_ result ⍵ → text: pairs, W/D/L, mean pair score with interval, Elo range when both ends are inside (0,1)
         p←2÷⍨+/⍵ ⋄ w d l←+/1 0.5 0∘.=,⍵ ⋄ b←⍺ Boot p
         0=≢b:'insufficient data'
         m lo hi i←b ⋄ J←{1↓∊⍺,¨⍵}                                    ⍝ join texts ⍵ with ⍺
