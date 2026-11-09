@@ -1,1 +1,0 @@
-NPlay←{f←⍺ NFlips ⍵ ⋄ (⍸⍵[1;]>f)Bd ⍺,⍸⍵[0;]∨f} ⍝ naive Play, built from square lists

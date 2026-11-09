@@ -1,1 +1,0 @@
-Score←{d+(×d)×64-+/c⊣d←-/c←+/⍵} ⍝ WTHOR disc difference: empties go to the winner

@@ -1,1 +1,0 @@
-Positions←{⎕RL←⍺ ⋄ ⊃,/(↓?(⍵,70)⍴0)Playout¨⊂Start} ⍝ boards from ⍵ random games with seed ⍺ (⎕RL set here is not seen by called dfns, so draw here)

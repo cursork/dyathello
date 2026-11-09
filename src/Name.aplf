@@ -1,1 +1,0 @@
-Name←{r f←8 8⊤⍵ ⋄ 'abcdefgh'[f],⎕D[1+r]} ⍝ square ⍵ as 'd3'

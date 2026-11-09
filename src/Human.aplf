@@ -1,1 +1,0 @@
-Human←{⎕←Show ⍵ ⋄ x←⎕C(' '≠x)/x←⍞ ⋄ x≡,'q':¯1 ⋄ s←Sq x ⋄ s∊⍸Moves 1⊃⍵:s ⋄ ⎕←'Illegal move' ⋄ ∇⍵} ⍝ agent: ask at the keyboard; q quits

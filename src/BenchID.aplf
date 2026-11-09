@@ -1,4 +1,0 @@
-BenchID←{ ⍝ depths ⍵ → per depth: depth, total ms over BenchPos for iterative deepening to that depth, sum of values
-    p←BenchPos 0
-    ↑{d←⍵ ⋄ t←⎕AI[2] ⋄ v←{⊃(⌊/⍬)d Think ⍵}¨p ⋄ d(⎕AI[2]-t)(+/v)}¨⍵
-}

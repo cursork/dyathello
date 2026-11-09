@@ -1,1 +1,0 @@
-Sq←{2≠≢⍵:¯1 ⋄ 8∊i←'abcdefgh' '12345678'⍳¨⍵:¯1 ⋄ 8⊥⌽i} ⍝ square from 'd3'; ¯1 if malformed

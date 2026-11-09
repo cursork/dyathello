@@ -1,4 +1,0 @@
-NFlips←{ ⍝ naive Flips: walk coordinates from square ⍺ on board ⍵
-    v←-⌿⍵ ⋄ p←8 8⊤⍺
-    (⍳64)∊∊{r←p NRay ⍵ ⋄ w←v[r] ⋄ n←+/∧\w=¯1 ⋄ n=≢w:⍬ ⋄ (1=w[n])/n↑r}¨(,∘.,⍨¯1 0 1)~⊂0 0
-}

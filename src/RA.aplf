@@ -1,1 +1,0 @@
-RA←{b←1⊃⍵ ⋄ s←⍸Moves b ⋄ ⎕RL←1+2147483646|⍺⍺+Key b ⋄ s[?≢s]} ⍝ agent (seed RA): random move, reproducible from seed and position

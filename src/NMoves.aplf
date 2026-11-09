@@ -1,1 +1,0 @@
-NMoves←{e←⍸~∨⌿⍵ ⋄ (⍳64)∊e/⍨∨/¨e NFlips¨⊂⍵} ⍝ naive Moves

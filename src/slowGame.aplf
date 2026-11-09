@@ -1,7 +1,0 @@
-slowGame←{ ⍝ Phase 6 gate: a full game, engine at 5 s per move (solver from 12 empties) vs seeded random → longest move ms, engine's moves, final Black margin
-    t←⍬ ⋄ r←?70⍴0
-    E←{s←⎕AI[2] ⋄ m←⊃5000 Think 1⊃⍵ ⋄ t,←⎕AI[2]-s ⋄ m}
-    R←{s←⍸Moves 1⊃⍵ ⋄ s[⌊(≢s)×r[+/,1⊃⍵]]}
-    g←(E Game R)0 Start
-    (⌈/t)(≢t)(Result g)
-}

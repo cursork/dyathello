@@ -1,9 +1,0 @@
-Game←{ ⍝ agent ⍺⍺ moves now, ⍵⍵ next; ⍵ is (colour board); an agent maps a game to a square, or ¯1 to stop
-    c b←⍵
-    Terminal b:⍵
-    ~∨/Moves b:(⍵⍵ ∇∇ ⍺⍺)(~c)(⊖b)
-    s←⍺⍺ ⍵
-    s<0:⍵
-    s∊⍸Moves b:(⍵⍵ ∇∇ ⍺⍺)(~c)(s Play b)
-    'illegal move'⎕SIGNAL 11
-}

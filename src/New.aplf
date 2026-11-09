@@ -1,8 +1,0 @@
-New←{ ⍝ empty table with 2*⍵ slots: key (¯1 empty), value, depth, bound (0 exact, 1 lower, 2 upper), move;
-    ⍝ plus limits and counters: dl deadline (⎕AI[2] ms), mx node limit (0 none), n nodes so far;
-    ⍝ configuration (oracle SearchConfig): base 1 to evaluate with the frozen baseline Eval2, ord move ordering, tt table probes and stores
-    t←⎕NS'' ⋄ s←2*⍵
-    t.(N K V D F Mv)←s(s⍴¯1)(s⍴0)(s⍴¯1)(s⍴0)(s⍴¯1)
-    t.(dl mx n ord tt)←(⌊/⍬)0 0 1 1 ⋄ t.base←0
-    t
-}

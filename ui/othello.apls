@@ -1,9 +1,9 @@
-#!/usr/local/bin/dyalogscript ENABLE_CEF=0 DYALOG_INITSESSION=1
-⍝ APL Othello: a raylibAPL front-end to the engine in src/. Run from the project root: ./ui/othello.apls
+#!/usr/local/bin/dyalogscript ENABLE_CEF=0
+⍝ APL Othello: a raylibAPL front-end to the engine in src/Othello.apln. Run from the project root: ./ui/othello.apls
 ⍝ Click to move. N new game, U undo, S swap sides, H hints, + / - engine time, Esc quit.
 ⎕IO←0
 root←⊃1⎕NPARTS''
-z←⎕SE.Link.Import '#.O' (root,'src')
+z←2⎕FIX'file://',root,'src/Othello.apln' ⋄ O←#.Othello
 rlDir←root,'vendor/raylibAPL/link/'
 rl←0⎕Fix rlDir,'raylib.apln'
 rl.Init rlDir

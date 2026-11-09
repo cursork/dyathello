@@ -1,4 +1,0 @@
-testMinimax←{ ⍝ full-window Search ≡ plain minimax at depths 0–4, including a forced pass and a move that ends the game
-    b←(13 Positions 2)[10×⍳4],(9 Bd 0 2)(0 Bd 1)
-    ∧/,(⍳5)∘.{(⍺ MM ⍵)=⊃(Wide ⍺)Search ⍵}b
-}

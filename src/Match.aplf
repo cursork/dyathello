@@ -1,1 +1,0 @@
-Match←{↑(⍺⍺ Pair ⍵⍵)¨↓⍵} ⍝ agents ⍺⍺ (A) and ⍵⍵ (B) over openings ⍵ (one per row) → per pair: A's points in its two games

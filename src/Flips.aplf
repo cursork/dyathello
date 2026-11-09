@@ -1,1 +1,0 @@
-Flips←{m o←Sides ⍵ ⋄ x←o Run ⍺∘.=⍳64 ⋄ ∨⌿⍤2⊢x∧⍤1 0∨/(8 64∘⍴⍤1⊢m)∧S x} ⍝ discs flipped by playing squares ⍺ on boards ⍵

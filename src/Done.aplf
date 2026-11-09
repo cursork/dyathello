@@ -1,1 +1,0 @@
-Done←{Terminal 1⊃⍵:⍵ ⋄ 'agent stopped with legal moves'⎕SIGNAL 11} ⍝ a match game must be played to the end

@@ -1,1 +1,0 @@
-TH←{⊃⍺⍺ Think 1⊃⍵} ⍝ agent: iterative deepening within limits ⍺⍺ ≡ ms [depth [nodes]]

@@ -1,1 +1,0 @@
-Parse←{c←'W'=⊃⍵[9;] ⋄ c(⊖⍣c⊢'XO'∘.=,⊖⍵[1+⍳8;1+⍳8])} ⍝ game from its picture; inverse of Show

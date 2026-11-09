@@ -1,1 +1,0 @@
-Tests←{t←{⍵/⍨(⊂'test')≡¨4↑¨⍵}⎕NL ¯3 ⋄ t/⍨~{⍎⍵,' 0'}¨t} ⍝ names of failing tests

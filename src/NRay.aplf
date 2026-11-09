@@ -1,1 +1,0 @@
-NRay←{c←⍺∘+¨⍵∘×¨1+⍳7 ⋄ 8⊥¨c/⍨∧\{∧/(⍵≥0)∧⍵<8}¨c} ⍝ squares walked from (rank file) ⍺ in direction ⍵

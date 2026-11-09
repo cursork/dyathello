@@ -1,1 +1,0 @@
-Rnd←{s←⍸Moves 1⊃⍵ ⋄ s[?≢s]} ⍝ agent: random legal move

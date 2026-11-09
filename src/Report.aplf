@@ -1,7 +1,0 @@
-Report←{ ⍝ seed ⍺; Match result ⍵ → text: pairs, W/D/L, mean pair score with interval, Elo range when both ends are inside (0,1)
-    p←(+/⍵)÷2 ⋄ w d l←+/1 0.5 0∘.=,⍵ ⋄ b←⍺ Boot p
-    0=≢b:'insufficient data'
-    m lo hi i←b ⋄ F←{1⍕⍵} ⋄ G←{3⍕⍵}
-    e←{(lo>0)∧hi<1:'  Elo [',(F Elo lo),',',(F Elo hi),']' ⋄ ''}0
-    'pairs ',(⍕≢p),'  W/D/L ',(⍕w),'/',(⍕d),'/',(⍕l),'  score ',(G m),' [',(G lo),',',(G hi),'] ',(i⊃'uninformative' 'bootstrap'),e
-}

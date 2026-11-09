@@ -1,5 +1,0 @@
-testEngine←{ ⍝ depth-2 alpha-beta beats a (seeded) random player from both colours
-    ⎕RL←23 ⋄ r←?10 70⍴0
-    G←{f←⍵ ⋄ R←{s←⍸Moves 1⊃⍵ ⋄ s[⌊(≢s)×f[+/,1⊃⍵]]} ⋄ ⍺:0<Result((2 AB)Game R)0 Start ⋄ 0>Result(R Game(2 AB))0 Start}
-    8≤+/(10↑5⍴1)G¨↓r
-}

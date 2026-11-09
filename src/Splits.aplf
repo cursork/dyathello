@@ -1,5 +1,0 @@
-Splits←{ ⍝ opening sets ⍵ (one matrix each) → (per set: openings, duplicate lines, plies, ply-4 groups, first 20 in distinct groups) (groups shared by two sets)
-    G←{Canon 1⊃Replay 4↑⍵} ⋄ gk←{G¨↓⍵}¨⍵
-    s←↑{(≢⍵),((≢⍵)-≢∪↓⍵),(⊃⌽⍴⍵)}¨⍵
-    (s,(≢¨∪¨gk),⍪{20=≢∪20↑⍵}¨gk)(+/,(∘.<⍨⍳≢gk)×∘.{≢⍺∩⍵}⍨∪¨gk)
-}

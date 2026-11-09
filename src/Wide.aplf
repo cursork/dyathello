@@ -1,1 +1,0 @@
-Wide←{⍵,INF×¯1 1} ⍝ depth ⍵ with the full alpha-beta window

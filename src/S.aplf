@@ -1,1 +1,0 @@
-S←{((⍴⍵)⍴M)∧((¯1↓⍴⍵)⍴K)⌽⍵} ⍝ shift each (…,8,64) direction row one step; edges fall off

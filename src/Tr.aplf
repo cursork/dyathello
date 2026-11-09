@@ -1,1 +1,0 @@
-Tr←{s←⍴⍵ ⋄ s⍴(⌽∘⍉⍣(4|⍺))∘(⍉⍣(⍺≥4))⍤2⊢((¯1↓s),8 8)⍴⍵} ⍝ D4 element ⍺∊⍳8 applied to board or 64-vector ⍵
