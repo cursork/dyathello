@@ -5,7 +5,7 @@
 ⍝ ─── Board and moves: a board is 2 64⍴ boolean [me;opp], square i = 8⊥rank file, a1 = 0
     Bd←{⍉(⍳64)∘.∊⍺ ⍵} ⍝ board from my squares ⍺ and opponent squares ⍵
     Sides←{0 1(⌷⍤0 2)¨⊂⍵} ⍝ boards (…,2,64) → mine theirs, each (…,64)
-    S←{((⍴⍵)⍴M)∧((¯1↓⍴⍵)⍴K)⌽⍵} ⍝ shift each (…,8,64) direction row one step; edges fall off
+    S←{(M⍴⍨⍴⍵)∧(K⍴⍨¯1↓⍴⍵)⌽⍵} ⍝ shift each (…,8,64) direction row one step; edges fall off
     Run←{O←8 64∘⍴⍤1⊢⍺ ⋄ {⍵∨O∧S ⍵}⍣≡O∧S 8 64∘⍴⍤1⊢⍵} ⍝ (…,8,64): per direction, contiguous discs ⍺ reached from ⍵
     Moves←{m o←Sides ⍵ ⋄ (~m∨o)∧∨⌿⍤2⊢S o Run m} ⍝ legal moves for each board (…,2,64)
     Flips←{m o←Sides ⍵ ⋄ x←o Run ⍺∘.=⍳64 ⋄ ∨⌿⍤2⊢x∧⍤1 0∨/(8 64∘⍴⍤1⊢m)∧S x} ⍝ discs flipped by playing squares ⍺ on boards ⍵
@@ -13,7 +13,7 @@
     Terminal←{~∨/⍵∨⍥Moves⊖⍤2⊢⍵} ⍝ neither side can move, per board
     Score←{d+(×d)×64-+/c⊣d←-/c←+/⍵} ⍝ WTHOR disc difference: empties go to the winner
     Perft←{ ⍝ leaf count to depth ⍺ from board(s) ⍵, a ply at a time; a pass is a ply, a terminal node counts 1
-        b←(¯3↑1,⍴⍵)⍴⍵
+        b←⍵⍴⍨¯3↑1,⍴⍵
         ⍺=0:≢b
         m←Moves b
         ⍺=1:+/1⌈+/m
@@ -22,7 +22,7 @@
         t←~∨/Moves p
         (+/t)+(⍺-1)∇(s Play b[i;;])⍪p⌿⍨~t
     }
-    Key←{(((¯2↓⍴⍵),128)⍴⍵)+.×Z} ⍝ hash of each board: sum of random 45-bit numbers over its 128 bits, exact below 2*53
+    Key←{Z+.×⍨⍵⍴⍨128,⍨¯2↓⍴⍵} ⍝ hash of each board: sum of random 45-bit numbers over its 128 bits, exact below 2*53
 
 ⍝ ─── Squares, pictures, games and agents
     Name←{r f←8 8⊤⍵ ⋄ 'abcdefgh'[f],⎕D[1+r]} ⍝ square ⍵ as 'd3'
