@@ -64,8 +64,8 @@
         a t←+/∘Moves¨⍵(⊖⍤2⊢⍵)
         v←(a t)⍺⍺ ⍵
         ~0∊a:v
-        i←⍸(a=0)∧t>0 ⋄ v[i]←-(t[i])(a[i])⍺⍺⊖⍤2⊢⍵[i;;]
-        i←⍸0=a+t ⋄ v[i]←100×Score ⍵[i;;]
+        p←(a=0)∧t>0 ⋄ v[⍸p]←-(p∘/¨t a)⍺⍺⊖⍤2⊢p⌿⍵            ⍝ forced pass: the opponent's view, negated
+        f←0=a+t ⋄ v[⍸f]←100×Score f⌿⍵                       ⍝ finished: exact
         v
     }
     Wide←{⍵,inf×¯1 1} ⍝ depth ⍵ with the full alpha-beta window
