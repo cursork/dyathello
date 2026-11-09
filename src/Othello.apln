@@ -1,5 +1,5 @@
 :Namespace Othello
-⍝ Othello in Dyalog APL: a port of the Rust engine in ~/work/crust/othello (see CLAUDE.md).
+⍝ Othello engine: board, move generation, evaluation and search (see README.md).
     ⎕IO←0
 
 ⍝ ─── Board and moves: a board is 2 64⍴ boolean [me;opp], square i = 8⊥rank file, a1 = 0
@@ -26,7 +26,7 @@
 
 ⍝ ─── Evaluation and search (scores in centidiscs)
     Div←(××⌊⍤|)÷ ⍝ integer division truncating toward zero
-    Eval←{ ⍝ oracle evaluate in centidiscs (±6400) for each board (…,2,64): table, mobility, frontier, corner risk, blended by phase
+    Eval←{ ⍝ heuristic value in centidiscs (±6400) for each board (…,2,64): table, mobility, frontier, corner risk, blended by phase
         ⍝ ⍺ (optional): move counts of the side to move and of the opponent
         ⍺←+/∘Moves¨⍵(⊖⍤2⊢⍵) ⋄ (a t)←⍺
         (m o)←Sides ⍵ ⋄ e←~m∨o ⋄ d←m-o
@@ -51,7 +51,7 @@
         s←2*⍵
         (size:s ⋄ key:s⍴¯1 ⋄ val:s⍴0 ⋄ dep:s⍴¯1 ⋄ bnd:s⍴0 ⋄ mv:s⍴¯1   ⍝ slots; per slot key (¯1 empty), value, depth, bound (0 exact 1 lower 2 upper), move
          dl:⌊/⍬ ⋄ mx:0 ⋄ n:0                             ⍝ deadline (⎕AI[2] ms), node limit (0 none), nodes so far
-         ord:1 ⋄ tt:1)                                  ⍝ oracle SearchConfig: move ordering, table use
+         ord:1 ⋄ tt:1)                                  ⍝ switches: move ordering, table use
     }
     Search←{ ⍝ ⍺ ≡ depth alpha beta [table]; fail-soft negamax of board ⍵ → value, best square (¯1 if none chosen)
         (d a z)←3↑⍺ ⋄ tab←3{⍺=≢⍵:(n:0) ⋄ ⍺⊃⍵}⍺                        ⍝ no table: a namespace that only counts nodes
@@ -95,7 +95,7 @@
     rot←-dirs+.×8 1                                                        ⍝ rotation that shifts a square one step in each direction
     mask←{∧⌿(0≤x)∧8>x←(8 8⊤⍳64)-⍤1 0⊢⍵}⍤1⊢dirs                           ⍝ squares a step can land on without wrapping
     weights←[100 ¯1 10 5 5 10 ¯1 100 ⋄ ¯1 ¯1 ¯2 ¯2 ¯2 ¯2 ¯1 ¯1 ⋄ 10 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2 10 ⋄ 5 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2 5
-       5 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2 5 ⋄ 10 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2 10 ⋄ ¯1 ¯1 ¯2 ¯2 ¯2 ¯2 ¯1 ¯1 ⋄ 100 ¯1 10 5 5 10 ¯1 100]   ⍝ oracle square weights
+       5 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2 5 ⋄ 10 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2 10 ⋄ ¯1 ¯1 ¯2 ¯2 ¯2 ¯2 ¯1 ¯1 ⋄ 100 ¯1 10 5 5 10 ¯1 100]   ⍝ square weights
     corners←(⍳64)∘.=0 7 56 63                                         ⍝ 64×4: which square is which corner
     near←((7×4≤8|⍳64)+56×4≤⌊8÷⍨⍳64)∘.=0 7 56 63                       ⍝ 64×4: each square's own corner (by quadrant)
     risk←near×⍤1 0⊢((⍳64)∘.∊(9 14 49 54)(1 6 8 15 48 55 57 62))+.×49 19  ⍝ X-squares cost 49, C-squares 19, while their corner is empty
