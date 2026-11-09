@@ -6,7 +6,7 @@
     Bd←{⍉(⍳64)∘.∊⍺ ⍵} ⍝ board from my squares ⍺ and opponent squares ⍵
     Sides←0 1(⌷⍤0 2)¨⊂ ⍝ boards (…,2,64) → mine theirs, each (…,64)
     S←{(mask⍴⍨⍴⍵)∧(rot⍴⍨¯1↓⍴⍵)⌽⍵} ⍝ shift each (…,8,64) direction row one step; edges fall off
-    Run←{O←8 64∘⍴⍤1⊢⍺ ⋄ {⍵∨O∧S ⍵}⍣≡O∧S 8 64∘⍴⍤1⊢⍵} ⍝ (…,8,64): per direction, contiguous discs ⍺ reached from ⍵
+    Run←{o←8 64∘⍴⍤1⊢⍺ ⋄ {⍵∨o∧S ⍵}⍣≡o∧S 8 64∘⍴⍤1⊢⍵} ⍝ (…,8,64): per direction, contiguous discs ⍺ reached from ⍵
     Moves←{m o←Sides ⍵ ⋄ (~m∨o)∧∨⌿⍤2⊢S o Run m} ⍝ legal moves for each board (…,2,64)
     Flips←{m o←Sides ⍵ ⋄ x←o Run ⍺∘.=⍳64 ⋄ ∨⌿⍤2⊢x∧⍤1 0∨/(8 64∘⍴⍤1⊢m)∧S x} ⍝ discs flipped by playing squares ⍺ on boards ⍵
     Play←{f←⍺ Flips ⍵ ⋄ ⊖⍤2⊢⍵≠(f∨⍺∘.=⍳64),[¯0.5]⍤1⊢f} ⍝ play squares ⍺ on boards ⍵; results are from the opponent's view
@@ -76,25 +76,25 @@
          ord:1 ⋄ tt:1 ⋄ base:0)                          ⍝ oracle SearchConfig: move ordering, table use, frozen baseline Eval2
     }
     Search←{ ⍝ ⍺ ≡ depth alpha beta [table]; fail-soft negamax of board ⍵ → value, best square (¯1 if none chosen)
-        d a z←3↑⍺ ⋄ T←3{⍺=≢⍵:(n:0) ⋄ ⍺⊃⍵}⍺                        ⍝ no table: a namespace that only counts nodes
-        tt ord base dl mx←T⎕VGET('tt' 0)('ord' 1)('base' 0)('dl'(⌊/⍬))('mx' 0)
-        (⎕AI[2]≥dl)∨(mx>0)∧T.n≥mx:⎕SIGNAL 999                      ⍝ out of time or nodes: abandon (nothing stored)
-        T.n+←1
+        d a z←3↑⍺ ⋄ tab←3{⍺=≢⍵:(n:0) ⋄ ⍺⊃⍵}⍺                        ⍝ no table: a namespace that only counts nodes
+        tt ord base dl mx←tab⎕VGET('tt' 0)('ord' 1)('base' 0)('dl'(⌊/⍬))('mx' 0)
+        (⎕AI[2]≥dl)∨(mx>0)∧tab.n≥mx:⎕SIGNAL 999                      ⍝ out of time or nodes: abandon (nothing stored)
+        tab.n+←1
         Ev←{⍺←⊢ ⋄ base:⍺ Eval2 ⍵ ⋄ ⍺ Eval ⍵}
         s←⍸Moves ⍵
-        0=≢s:{∨/Moves⊖⍵:¯1,⍨-⊃(T,⍨d,-z a)Search⊖⍵ ⋄ ¯1,⍨100×Score ⍵}⍵
+        0=≢s:{∨/Moves⊖⍵:¯1,⍨-⊃(tab,⍨d,-z a)Search⊖⍵ ⋄ ¯1,⍨100×Score ⍵}⍵
         d=0:¯1,⍨Ev ⍵
-        k i e←{~tt:0 0 0 ⋄ k←Key ⍵ ⋄ i←T.size|k ⋄ k i(T.key[i]=k)}⍵
-        {~e:0 ⋄ T.dep[i]≠d:0 ⋄ f x←T.bnd[i],T.val[i] ⋄ (f=⍳3)∨.∧1,(z≤x),x≤a}0:T.val[i],T.mv[i]
-        h←{~e:¯1 ⋄ T.dep[i]≥d:T.mv[i] ⋄ ¯1}0
+        k i e←{~tt:0 0 0 ⋄ k←Key ⍵ ⋄ i←tab.size|k ⋄ k i(tab.key[i]=k)}⍵
+        {~e:0 ⋄ tab.dep[i]≠d:0 ⋄ f x←tab.bnd[i],tab.val[i] ⋄ (f=⍳3)∨.∧1,(z≤x),x≤a}0:tab.val[i],tab.mv[i]
+        h←{~e:¯1 ⋄ tab.dep[i]≥d:tab.mv[i] ⋄ ¯1}0
         c←s Play(≢s)2 64⍴⍵
-        v←-Ev Leaf c ⋄ T.n+←≢c                                     ⍝ nodes: Search calls plus boards scored
+        v←-Ev Leaf c ⋄ tab.n+←≢c                                     ⍝ nodes: Search calls plus boards scored
         o←{ord:⍵ ⋄ ⍳≢s}⍒v ⋄ o←(o/⍨s[o]=h),o/⍨s[o]≠h  ⍝ table move first, then static value
-        L←{i b m a←⍵ ⋄ i=≢o:b m ⋄ x←-⊃(T,⍨(d-1),-z a)Search c[o[i];;] ⋄ b m←(x>b)⊃(b m)(x,s[o[i]]) ⋄ a⌈←x ⋄ a≥z:b m ⋄ ∇(i+1)b m a}
+        L←{i b m a←⍵ ⋄ i=≢o:b m ⋄ x←-⊃(tab,⍨(d-1),-z a)Search c[o[i];;] ⋄ b m←(x>b)⊃(b m)(x,s[o[i]]) ⋄ a⌈←x ⋄ a≥z:b m ⋄ ∇(i+1)b m a}
         r←{d=1:(⌈/v),s[⊃⍒v] ⋄ L 0(-inf)¯1 a}0
         ~tt:r
-        T.key[i]←k ⋄ T.val[i]←⊃r ⋄ T.dep[i]←d ⋄ T.mv[i]←1⊃r
-        w←⊃r ⋄ T.bnd[i]←(d>1)×(z≤w)+2×w≤a
+        tab.key[i]←k ⋄ tab.val[i]←⊃r ⋄ tab.dep[i]←d ⋄ tab.mv[i]←1⊃r
+        w←⊃r ⋄ tab.bnd[i]←(d>1)×(z≤w)+2×w≤a
         r
     }
     Think←{ ⍝ ⍺ ≡ ms [depth [nodes [threshold]]]: search board ⍵ (with a legal move) within limits
@@ -104,16 +104,16 @@
         ⍝ Otherwise iterative deepening, stopping at depth ≥ empties (exact: passes cost no depth).
         ⍝ A search to depth ≥ empties sees only finished games, so solving is Search with depth = empties.
         ms n x th←4↑⍺,(≢⍺)↓0 64 0 12
-        T←(New 20)⎕VSET('dl'(⎕AI[2]+ms))('mx'x) ⋄ b←⍵ ⋄ e←+/~∨⌿b
+        tab←(New 20)⎕VSET('dl'(⎕AI[2]+ms))('mx'x) ⋄ b←⍵ ⋄ e←+/~∨⌿b
         f←(⊃⍸Moves b)(Eval b)0 0 2 0
         e≤th:{
-            w←{999::f ⋄ v s←(e,¯1 1,T)Search b ⋄ s v 0 T.n 1 0}0
+            w←{999::f ⋄ v s←(e,¯1 1,tab)Search b ⋄ s v 0 tab.n 1 0}0
             2=4⊃w:w
             a z←¯1 1×1⌈inf×(1⊃w)×¯1 1  ⍝ win: ¯1 inf, loss: -inf 1, draw: ¯1 1
-            999::w ⋄ v s←(e,a,z,T)Search b ⋄ s v 0 T.n 0 1
+            999::w ⋄ v s←(e,a,z,tab)Search b ⋄ s v 0 tab.n 0 1
         }0
         n⌊←e
-        G←{d r←⍵ ⋄ d>n:r ⋄ 999::r ⋄ v s←(T,⍨Wide d)Search b ⋄ ∇(d+1)(s v d T.n(d<n)0)}
+        G←{d r←⍵ ⋄ d>n:r ⋄ 999::r ⋄ v s←(tab,⍨Wide d)Search b ⋄ ∇(d+1)(s v d tab.n(d<n)0)}
         G 1 f
     }
     AB←{1⊃(Wide ⍺⍺)Search 1⊃⍵} ⍝ agent: alpha-beta to depth ⍺⍺
@@ -123,7 +123,7 @@
     Eval2←{⍺←0 ⋄ m o←Sides ⍵ ⋄ 6400⌊¯6400⌈(100×(+/m)-+/o)+(m-o)+.×,weights2} ⍝ frozen phase-2 baseline (oracle eval_phase2): discs×100 + table weights2; ⍺ (move counts) ignored
     RA←{b←1⊃⍵ ⋄ s←⍸Moves b ⋄ ⎕RL←1+2147483646|⍺⍺+Key b ⋄ s[?≢s]} ⍝ agent (seed RA): random move, reproducible from seed and position
     Greedy←{b←1⊃⍵ ⋄ s←⍸Moves b ⋄ s[⊃⍒+/(s Play(≢s)2 64⍴b)[;1;]]} ⍝ agent: most discs after the move, lowest square on ties
-    P2←{T←(New 16)⎕VSET⊂'base' 1 ⋄ 1⊃(T,⍨Wide ⍺⍺)Search 1⊃⍵} ⍝ agent (d P2): current search to depth d with the frozen Eval2, fresh table each move
+    P2←{tab←(New 16)⎕VSET⊂'base' 1 ⋄ 1⊃(tab,⍨Wide ⍺⍺)Search 1⊃⍵} ⍝ agent (d P2): current search to depth d with the frozen Eval2, fresh table each move
     Replay←{ ⍝ game after opening squares ⍵ from game ⍺ (default: start, Black to move); colour toggles on placements and passes
         ⍺←0 start ⋄ 0=≢⍵:⍺ ⋄ c b←⍺
         Terminal b:'opening runs past the end of the game'⎕SIGNAL 11
@@ -192,7 +192,7 @@
     }
     Nodes←{ ⍝ ⍺ ≡ ordering table (0/1 switches); ⍵ depth → nodes and ms for iterative deepening to ⍵ over the midgame corpus
         o u←⍺ ⋄ d←⍵ ⋄ t←⎕AI[2]
-        n←+/{T←(New 20)⎕VSET('ord'o)('tt'u) ⋄ b←⍵ ⋄ z←{(T,⍨Wide ⍵)Search b}¨1+⍳d ⋄ T.n}¨12↑Corp 0
+        n←+/{tab←(New 20)⎕VSET('ord'o)('tt'u) ⋄ b←⍵ ⋄ z←{(tab,⍨Wide ⍵)Search b}¨1+⍳d ⋄ tab.n}¨12↑Corp 0
         n(⎕AI[2]-t)
     }
     SlowDiff←{Diff 1729 Positions 100}
@@ -274,16 +274,16 @@
         (e≡Show 0 start)∧∧/(2|⍳≢p){(⍺ ⍵)≡Parse Show ⍺ ⍵}¨p←3 Positions 3
     }
     TestSolve←{ ⍝ Phase 6: solve ≡ plain minimax at 6 empties; win/draw/loss first; partial after WDL; fallback inside WDL; WDL bounds reused
-        I←⌊/⍬ ⋄ g←{⍵/⍨6={+/~∨⌿⍵}¨⍵}{⍵/⍨{∨/Moves ⍵}¨⍵}31 Positions 12
-        s←{I 64 0 14 Think ⍵}¨g
+        forever←⌊/⍬ ⋄ g←{⍵/⍨6={+/~∨⌿⍵}¨⍵}{⍵/⍨{∨/Moves ⍵}¨⍵}31 Positions 12
+        s←{forever 64 0 14 Think ⍵}¨g
         ex←∧/({0 1≡⍵[4 5]}¨s)∧(1⊃¨s)={6 MM ⍵}¨g  ⍝ complete, solved, value = 6-ply minimax (exact at 6 empties)
-        b←⊃g/⍨0≠1⊃¨s ⋄ v←1⊃I 64 0 14 Think b
-        T←New 20 ⋄ w←⊃(6,¯1 1,T)Search b ⋄ wd←(×w)=×v ⋄ k←T.n
-        p←I 64(k+1)14 Think b ⋄ pa←(1 0≡p[4 5])∧((×1⊃p)=×v)∧(⊃p)∊⍸Moves b
-        fb←2 0≡(I 64 2 14 Think b)[4 5]
-        C←New 20 ⋄ c←(C,⍨Wide 6)Search b
-        r←⊃(T,⍨6,¯1 1×1⌈inf×w×¯1 1)Search b
-        ru←(r=⊃c)∧(T.n-k)<C.n
+        b←⊃g/⍨0≠1⊃¨s ⋄ v←1⊃forever 64 0 14 Think b
+        tab←New 20 ⋄ w←⊃(6,¯1 1,tab)Search b ⋄ wd←(×w)=×v ⋄ k←tab.n
+        p←forever 64(k+1)14 Think b ⋄ pa←(1 0≡p[4 5])∧((×1⊃p)=×v)∧(⊃p)∊⍸Moves b
+        fb←2 0≡(forever 64 2 14 Think b)[4 5]
+        cold←New 20 ⋄ c←(cold,⍨Wide 6)Search b
+        r←⊃(tab,⍨6,¯1 1×1⌈inf×w×¯1 1)Search b
+        ru←(r=⊃c)∧(tab.n-k)<cold.n
         ex∧wd∧pa∧fb∧ru
     }
     TestSplits←{s x←Splits Data¨'OpenTune' 'OpenVal' 'OpenFinal' ⋄ (x=0)∧(s[;0 1 2 4]≡3 4⍴512 0 8 1)∧∧/s[;3]≥20} ⍝ frozen opening sets: oracle's split rules
@@ -299,22 +299,22 @@
     }
     TestTT←{ ⍝ the table never changes a value: cold, warm, deep-then-shallow, and a 1-slot table where every key collides
         p←(11 Positions 2)[15×⍳4]
-        ∧/{b←⍵ ⋄ v←{⊃(Wide ⍵)Search b}¨4 3 4 ⋄ T←New 16 ⋄ C←New 0
-            (v≡{⊃(T,⍨Wide ⍵)Search b}¨4 3 4)∧v≡{⊃(C,⍨Wide ⍵)Search b}¨4 3 4}¨p
+        ∧/{b←⍵ ⋄ v←{⊃(Wide ⍵)Search b}¨4 3 4 ⋄ tab←New 16 ⋄ one←New 0
+            (v≡{⊃(tab,⍨Wide ⍵)Search b}¨4 3 4)∧v≡{⊃(one,⍨Wide ⍵)Search b}¨4 3 4}¨p
     }
     TestThink←{ ⍝ Phase 4: ID ≡ fixed depth; deterministic cancellation by time 0 and by nodes; 50 ms smoke; exact stop (solver off: threshold 0)
-        p←(11 Positions 2)[15×⍳4] ⋄ b←⊃p ⋄ I←⌊/⍬
-        id←∧/{(⊃(Wide 4)Search ⍵)=1⊃I 4 0 0 Think ⍵}¨p
+        p←(11 Positions 2)[15×⍳4] ⋄ b←⊃p ⋄ forever←⌊/⍬
+        id←∧/{(⊃(Wide 4)Search ⍵)=1⊃forever 4 0 0 Think ⍵}¨p
         f←((⊃⍸Moves b),(Eval b),0 0 2 0)≡0 Think b
-        r←I 64 300∘Think¨b b ⋄ nd←(≡/r)∧(1 2∊⍨4⊃⊃r)∧(⊃⊃r)∊⍸Moves b
+        r←forever 64 300∘Think¨b b ⋄ nd←(≡/r)∧(1 2∊⍨4⊃⊃r)∧(⊃⊃r)∊⍸Moves b
         t←⎕AI[2] ⋄ s←50 Think b ⋄ sm←((⎕AI[2]-t)≤100)∧(⊃s)∊⍸Moves b
-        e←⊃(11 Positions 1)[50] ⋄ x←I 64 0 0 Think e ⋄ ex←(0=4⊃x)∧(2⊃x)=+/~∨⌿e
+        e←⊃(11 Positions 1)[50] ⋄ x←forever 64 0 0 Think e ⋄ ex←(0=4⊃x)∧(2⊃x)=+/~∨⌿e
         id∧f∧nd∧sm∧ex
     }
     TestWindow←{ ⍝ fail-soft: a result ≤α is an upper bound, ≥β a lower bound, otherwise exact; depth 1 is always exact
-        W←(¯300 ¯50)(¯50 50)(50 300)(¯1 1)(¯300 300)(10 20)(¯20 ¯10)
+        ws←(¯300 ¯50)(¯50 50)(50 300)(¯1 1)(¯300 300)(10 20)(¯20 ¯10)
         ∧/∊{b←⍵ ⋄ ∊1 3∘.{t←⊃(Wide ⍺)Search b ⋄ a z←t+⍵ ⋄ r←⊃(⍺ a z)Search b
-            ((r>a)∨t≤r)∧((r<z)∨t≥r)∧((r≤a)∨(r≥z)∨r=t)∧(⍺>1)∨r=t}W}¨(17 Positions 2)[8×⍳6]
+            ((r>a)∨t≤r)∧((r<z)∨t≥r)∧((r≤a)∨(r≥z)∨r=t)∧(⍺>1)∨r=t}ws}¨(17 Positions 2)[8×⍳6]
     }
 
 ⍝ ─── Data files in data/ next to this script (opening sets, corpus, oracle fixtures)
