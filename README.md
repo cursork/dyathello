@@ -81,3 +81,7 @@ Games.(Show(Human _Game_ Rnd)0 eng.start)
 ```
 
 Run `Tests.RunTests 0` for the tests, `./tools/match.apls` for a headless match, and `./ui/othello.apls` for the graphical front end.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
