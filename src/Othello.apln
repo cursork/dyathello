@@ -90,15 +90,33 @@
     }
 
 ⍝ ─── Constants
-    inf←1000000
+    inf←1e6
     dirs←[0 1 ⋄ 0 ¯1 ⋄ 1 0 ⋄ ¯1 0 ⋄ 1 1 ⋄ 1 ¯1 ⋄ ¯1 1 ⋄ ¯1 ¯1]        ⍝ directions (Δrank Δfile): E W N S NE NW SE SW
     rot←-dirs+.×8 1                                                        ⍝ rotation that shifts a square one step in each direction
-    mask←{∧⌿(0≤x)∧8>x←(8 8⊤⍳64)-⍤1 0⊢⍵}⍤1⊢dirs                           ⍝ squares a step can land on without wrapping
-    weights←[100 ¯1 10 5 5 10 ¯1 100 ⋄ ¯1 ¯1 ¯2 ¯2 ¯2 ¯2 ¯1 ¯1 ⋄ 10 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2 10 ⋄ 5 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2 5
-       5 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2 5 ⋄ 10 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2 10 ⋄ ¯1 ¯1 ¯2 ¯2 ¯2 ¯2 ¯1 ¯1 ⋄ 100 ¯1 10 5 5 10 ¯1 100]   ⍝ square weights
-    corners←(⍳64)∘.=0 7 56 63                                         ⍝ 64×4: which square is which corner
-    near←((7×4≤8|⍳64)+56×4≤⌊8÷⍨⍳64)∘.=0 7 56 63                       ⍝ 64×4: each square's own corner (by quadrant)
-    risk←near×⍤1 0⊢((⍳64)∘.∊(9 14 49 54)(1 6 8 15 48 55 57 62))+.×49 19  ⍝ X-squares cost 49, C-squares 19, while their corner is empty
+    mask←∧/(⍳8)∊⍨(⍉8 8⊤⍳64)-⍤1⍤2 1⊢dirs                                    ⍝ squares a step can land on without wrapping
+    weights←[                                                              ⍝ square weights, a1 top left
+        100 ¯1 10  5  5 10 ¯1 100
+         ¯1 ¯1 ¯2 ¯2 ¯2 ¯2 ¯1  ¯1
+         10 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2  10
+          5 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2   5
+          5 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2   5
+         10 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2  10
+         ¯1 ¯1 ¯2 ¯2 ¯2 ¯2 ¯1  ¯1
+        100 ¯1 10  5  5 10 ¯1 100
+    ]
+    danger←[                                                               ⍝ cost of a disc on an X-square (49) or C-square (19)
+         0 19  0  0  0  0 19  0
+        19 49  0  0  0  0 49 19
+         0  0  0  0  0  0  0  0
+         0  0  0  0  0  0  0  0
+         0  0  0  0  0  0  0  0
+         0  0  0  0  0  0  0  0
+        19 49  0  0  0  0 49 19
+         0 19  0  0  0  0 19  0
+    ]
+    corners←(⍳64)∘.=0 7 56 63                                              ⍝ 64×4: which square is which corner
+    near←corners⌷⍨⊂8⊥7×4≤8 8⊤⍳64                                           ⍝ 64×4: each square's own corner (by quadrant)
+    risk←near×⍤1 0,danger                                                  ⍝ 64×4: the cost applies while that corner is empty
     zobrist←{⎕RL←20261109 ⋄ ?128⍴2*45}0                                   ⍝ hash keys
     start←28 35 Bd 27 36                                             ⍝ Black on d5 e4, White on d4 e5, Black to move
 :EndNamespace
