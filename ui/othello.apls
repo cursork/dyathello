@@ -55,7 +55,7 @@ Info←{ ⍝ last engine search result ⍵ → one line
     'Engine played ',(O.Name s),': depth ',(⍕d),', eval ',(Num v),', ',(⍕n),' nodes'
 }
 
-G←0 O.Start ⋄ hist←⍬ ⋄ hc←0 ⋄ ms←2000 ⋄ hints←1 ⋄ lm←¯1 ⋄ last←⍬ ⋄ pend←0 ⋄ pc←0
+G←0 O.start ⋄ hist←⍬ ⋄ hc←0 ⋄ ms←2000 ⋄ hints←1 ⋄ lm←¯1 ⋄ last←⍬ ⋄ pend←0 ⋄ pc←0
 K←rl.KeyboardKey ⋄ LMB←rl.MouseButton.MOUSE_BUTTON_LEFT
 
 rl.InitWindow W H 'APL Othello'
@@ -64,7 +64,7 @@ rl.InitWindow W H 'APL Othello'
     c b←G ⋄ mv←⍸O.Moves b ⋄ over←O.Terminal b ⋄ sq←Under rl.GetMousePosition⍬
 
     ⍝ input
-    :If rl.IsKeyPressed K.KEY_N ⋄ G←0 O.Start ⋄ hist←⍬ ⋄ lm←¯1 ⋄ last←⍬ ⋄ pend←0 ⋄ :Continue ⋄ :EndIf
+    :If rl.IsKeyPressed K.KEY_N ⋄ G←0 O.start ⋄ hist←⍬ ⋄ lm←¯1 ⋄ last←⍬ ⋄ pend←0 ⋄ :Continue ⋄ :EndIf
     :If rl.IsKeyPressed K.KEY_H ⋄ hints←~hints ⋄ :EndIf
     :If rl.IsKeyPressed K.KEY_S ⋄ hc←~hc ⋄ pend←0 ⋄ :EndIf
     :If rl.IsKeyPressed K.KEY_EQUAL ⋄ ms←16000⌊ms×2 ⋄ :EndIf
