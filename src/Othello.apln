@@ -102,7 +102,7 @@
         ⍝ Otherwise iterative deepening, stopping at depth ≥ empties (exact: passes cost no depth).
         ⍝ A search to depth ≥ empties sees only finished games, so solving is Search with depth = empties.
         ms n x th←4↑⍺,(≢⍺)↓0 64 0 12
-        T←New 20 ⋄ T.(dl mx)←(⎕AI[2]+ms)x ⋄ b←⍵ ⋄ e←+/~∨⌿b
+        T←(New 20)⎕VSET('dl'(⎕AI[2]+ms))('mx'x) ⋄ b←⍵ ⋄ e←+/~∨⌿b
         f←(⊃⍸Moves b)(Eval b)0 0 2 0
         e≤th:{
             w←{999::f ⋄ v s←(e,¯1 1,T)Search b ⋄ s v 0 T.n 1 0}0
@@ -121,7 +121,7 @@
     Eval2←{⍺←0 ⋄ m o←Sides ⍵ ⋄ 6400⌊¯6400⌈(100×(+/m)-+/o)+(m-o)+.×,W2} ⍝ frozen phase-2 baseline (oracle eval_phase2): discs×100 + table W2; ⍺ (move counts) ignored
     RA←{b←1⊃⍵ ⋄ s←⍸Moves b ⋄ ⎕RL←1+2147483646|⍺⍺+Key b ⋄ s[?≢s]} ⍝ agent (seed RA): random move, reproducible from seed and position
     Greedy←{b←1⊃⍵ ⋄ s←⍸Moves b ⋄ s[⊃⍒+/(s Play(≢s)2 64⍴b)[;1;]]} ⍝ agent: most discs after the move, lowest square on ties
-    P2←{T←New 16 ⋄ T.base←1 ⋄ 1⊃(T,⍨Wide ⍺⍺)Search 1⊃⍵} ⍝ agent (d P2): current search to depth d with the frozen Eval2, fresh table each move
+    P2←{T←(New 16)⎕VSET⊂'base' 1 ⋄ 1⊃(T,⍨Wide ⍺⍺)Search 1⊃⍵} ⍝ agent (d P2): current search to depth d with the frozen Eval2, fresh table each move
     Replay←{ ⍝ game after opening squares ⍵ from game ⍺ (default: start, Black to move); colour toggles on placements and passes
         ⍺←0 Start ⋄ 0=≢⍵:⍺ ⋄ c b←⍺
         Terminal b:'opening runs past the end of the game'⎕SIGNAL 11
@@ -190,7 +190,7 @@
     }
     Nodes←{ ⍝ ⍺ ≡ ordering table (0/1 switches); ⍵ depth → nodes and ms for iterative deepening to ⍵ over the midgame corpus
         o u←⍺ ⋄ d←⍵ ⋄ t←⎕AI[2]
-        n←+/{T←New 20 ⋄ T.(ord tt)←o u ⋄ b←⍵ ⋄ z←{(T,⍨Wide ⍵)Search b}¨1+⍳d ⋄ T.n}¨12↑Corp 0
+        n←+/{T←(New 20)⎕VSET('ord'o)('tt'u) ⋄ b←⍵ ⋄ z←{(T,⍨Wide ⍵)Search b}¨1+⍳d ⋄ T.n}¨12↑Corp 0
         n(⎕AI[2]-t)
     }
     slowDiff←{Diff 1729 Positions 100}
