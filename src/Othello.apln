@@ -5,10 +5,11 @@
 ⍝ ─── Board and moves: a board is 2 64⍴ boolean [me;opp], square i = 8⊥rank file, a1 = 0
     Bd←{⍉(⍳64)∘.∊⍺ ⍵} ⍝ board from my squares ⍺ and opponent squares ⍵
     Sides←0 1(⌷⍤0 2)¨⊂ ⍝ boards (…,2,64) → mine theirs, each (…,64)
+    Eight←8 64∘⍴⍤1 ⍝ each (…,64) row once per direction → (…,8,64)
     S←{(mask⍴⍨⍴⍵)∧(rot⍴⍨¯1↓⍴⍵)⌽⍵} ⍝ shift each (…,8,64) direction row one step; edges fall off
-    Run←{o←8 64∘⍴⍤1⊢⍺ ⋄ {⍵∨o∧S ⍵}⍣≡o∧S 8 64∘⍴⍤1⊢⍵} ⍝ (…,8,64): per direction, contiguous discs ⍺ reached from ⍵
+    Run←{o←Eight ⍺ ⋄ {⍵∨o∧S ⍵}⍣≡o∧S Eight ⍵} ⍝ (…,8,64): per direction, contiguous discs ⍺ reached from ⍵
     Moves←{m o←Sides ⍵ ⋄ (~m∨o)∧∨⌿⍤2⊢S o Run m} ⍝ legal moves for each board (…,2,64)
-    Flips←{m o←Sides ⍵ ⋄ x←o Run ⍺∘.=⍳64 ⋄ ∨⌿⍤2⊢x∧⍤1 0∨/(8 64∘⍴⍤1⊢m)∧S x} ⍝ discs flipped by playing squares ⍺ on boards ⍵
+    Flips←{m o←Sides ⍵ ⋄ x←o Run ⍺∘.=⍳64 ⋄ ∨⌿⍤2⊢x∧⍤1 0∨/(Eight m)∧S x} ⍝ discs flipped by playing squares ⍺ on boards ⍵
     Play←{f←⍺ Flips ⍵ ⋄ ⊖⍤2⊢⍵≠(f∨⍺∘.=⍳64),[¯0.5]⍤1⊢f} ⍝ play squares ⍺ on boards ⍵; results are from the opponent's view
     Terminal←{~∨/⍵∨⍥Moves⊖⍤2⊢⍵} ⍝ neither side can move, per board
     Score←{d+(×d)×64-+/c⊣d←-/c←+/⍵} ⍝ WTHOR disc difference: empties go to the winner
