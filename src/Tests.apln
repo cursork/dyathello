@@ -134,20 +134,19 @@
         p←3 Positions 3
         ∧/(e≡gm.Show 0 eng.start ⋄ ∧/(2|⍳≢p){(⍺ ⍵)≡gm.Parse gm.Show ⍺ ⍵}¨p)
     }
-    TestSolve←{ ⍝ Phase 6 solver
-        forever←⌊/⍬ ⋄ g←{⍵/⍨6={+/~∨⌿⍵}¨⍵}{⍵/⍨{∨/eng.Moves ⍵}¨⍵}31 Positions 12 ⋄ s←{forever 64 0 14 eng.Think ⍵}¨g
-        b←⊃g/⍨0≠1⊃¨s ⋄ v←1⊃forever 64 0 14 eng.Think b
+    TestSolve←{ ⍝ the exact last iteration (Phase 6)
+        forever←⌊/⍬ ⋄ g←{⍵/⍨6={+/~∨⌿⍵}¨⍵}{⍵/⍨{∨/eng.Moves ⍵}¨⍵}31 Positions 12 ⋄ s←{forever eng.Think ⍵}¨g
+        b←⊃g/⍨0≠1⊃¨s ⋄ v←1⊃q←forever eng.Think b
         tab←eng.New 20 ⋄ w←⊃(tab,⍨6 ¯1 1)eng.Search b ⋄ k←tab.n            ⍝ win/draw/loss into tab
         cold←eng.New 20 ⋄ c←⊃(cold,⍨eng.Wide 6)eng.Search b
         r←⊃(tab,⍨6,¯1 1×1⌈eng.inf×w×¯1 1)eng.Search b                     ⍝ exact, reusing tab's bounds
-        p←forever 64(k+1)14 eng.Think b
+        p←forever 64(⌊2÷⍨3⊃q)eng.Think b                                  ⍝ half the nodes of the full solve
         ∧/(
             ∧/{0 1≡⍵[4 5]}¨s                     ⍝ complete and solved
             (1⊃¨s)≡{6 MM ⍵}¨g                    ⍝ = plain minimax (exact at 6 empties)
             (×w)=×v                              ⍝ win/draw/loss has the exact value's sign
-            1 0≡p[4 5]                           ⍝ out of nodes just after win/draw/loss: partial, not solved,
-            (×1⊃p)=×v ⋄ (⊃p)∊⍸eng.Moves b            ⍝ right sign, legal move
-            2 0≡(forever 64 2 14 eng.Think b)[4 5]   ⍝ out of nodes inside win/draw/loss: fallback
+            1 0≡p[4 5] ⋄ (⊃p)∊⍸eng.Moves b       ⍝ out of nodes before the end: partial, not solved, a searched legal move
+            2 0≡(0 eng.Think b)[4 5]             ⍝ no time at all: fallback
             r=c ⋄ (tab.n-k)<cold.n               ⍝ reused bounds: same value, fewer nodes
         )
     }

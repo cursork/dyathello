@@ -25,7 +25,7 @@
     Key←{zobrist+.×⍨⍵⍴⍨128,⍨¯2↓⍴⍵} ⍝ hash of each board: sum of random 45-bit numbers over its 128 bits, exact below 2*53
 
 ⍝ ─── Evaluation and search (scores in centidiscs)
-    Div←(××⌊⍤|)÷ ⍝ integer division truncating toward zero, like Rust
+    Div←(××⌊⍤|)÷ ⍝ integer division truncating toward zero
     Eval←{ ⍝ oracle evaluate in centidiscs (±6400) for each board (…,2,64): table, mobility, frontier, corner risk, blended by phase
         ⍝ ⍺ (optional): move counts of the side to move and of the opponent
         ⍺←+/∘Moves¨⍵(⊖⍤2⊢⍵) ⋄ a t←⍺
@@ -74,24 +74,19 @@
         w←⊃r ⋄ tab.bnd[i]←(d>1)×(z≤w)+2×w≤a
         r
     }
-    Think←{ ⍝ ⍺ ≡ ms [depth [nodes [threshold]]]: search board ⍵ (with a legal move) within limits
-        ⍝ → square value depth nodes status solved; status 0 complete, 1 partial (a limit stopped later work),
-        ⍝   2 fallback (nothing completed: first legal move, static value). Depth 0 for an exact solve.
-        ⍝ At most threshold (default 12: 12-empty solves finish within 5 s here, 14-empty mostly do not) empties: root-only solve, win/draw/loss first, then the exact margin.
-        ⍝ Otherwise iterative deepening, stopping at depth ≥ empties (exact: passes cost no depth).
-        ⍝ A search to depth ≥ empties sees only finished games, so solving is Search with depth = empties.
+    Think←{ ⍝ ⍺ ≡ ms [depth [nodes [threshold]]]: iterative deepening of board ⍵ (with a legal move) within limits
+        ⍝ → square value depth nodes status solved; status 0 complete, 1 partial (a limit stopped a later iteration),
+        ⍝   2 fallback (no iteration finished: first legal move, static value).
+        ⍝ Depth stops at the number of empties e: passes cost no depth, so that iteration sees only finished games and is
+        ⍝ an exact solve (solved 1): win/draw/loss first, then the margin. At most threshold (default 12) empties, deepen
+        ⍝ only to 4 before solving: enough for a sound move if the solve runs out of time.
         ms n x th←4↑⍺,(≢⍺)↓0 64 0 12
         tab←(New 20)⎕VSET('dl'(⎕AI[2]+ms))('mx'x) ⋄ b←⍵ ⋄ e←+/~∨⌿b
-        f←(⊃⍸Moves b)(Eval b)0 0 2 0
-        e≤th:{
-            w←{999::f ⋄ v s←(tab,⍨e ¯1 1)Search b ⋄ s v 0 tab.n 1 0}0
-            2=4⊃w:w
-            a z←¯1 1×1⌈inf×(1⊃w)×¯1 1  ⍝ win: ¯1 inf, loss: -inf 1, draw: ¯1 1
-            999::w ⋄ v s←(tab,⍨e a z)Search b ⋄ s v 0 tab.n 0 1
-        }0
-        n⌊←e
-        G←{d r←⍵ ⋄ d>n:r ⋄ 999::r ⋄ v s←(tab,⍨Wide d)Search b ⋄ ∇(d+1)(s v d tab.n(d<n)0)}
-        G 1 f
+        ds←1+⍳n⌊e ⋄ ds←ds/⍨(e>th)∨(ds≤4)∨ds=e
+        X←{999::⍵ ⋄ v s←(tab,⍨e ¯1 1)Search b ⋄ w←s v e tab.n 1 0
+            999::w ⋄ v s←(tab,⍨e,¯1 1×1⌈inf×v×¯1 1)Search b ⋄ s v e tab.n 0 1}
+        G←{0=≢⍺:⍵ ⋄ d←⊃⍺ ⋄ d=e:X ⍵ ⋄ 999::⍵ ⋄ v s←(tab,⍨Wide d)Search b ⋄ (1↓⍺)∇ s v d tab.n(1<≢⍺)0}
+        ds G(⊃⍸Moves b)(Eval b)0 0 2 0
     }
 
 ⍝ ─── Constants
