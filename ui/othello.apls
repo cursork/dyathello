@@ -23,6 +23,12 @@ Pawn←{x y c n←⍵ ⋄ z←rl.DrawCircle x y 15 c ⋄ z←rl.DrawCircleLines 
 Who←{⍵⊃'Black' 'White'}
 Num←{((⍵<0)⊃'+-'),2⍕|⍵÷100}                                          ⍝ centidiscs as signed discs
 
+Final←{ ⍝ finished game ⍵ → 'White wins 60-3' (WTHOR margin noted when empty squares count)
+    c b←⍵ ⋄ n←+/⊖⍣c⊢b ⋄ m←O.Result ⍵ ⋄ t←(⍕⌈/n),'-',⍕⌊/n
+    m=0:'a draw, ',t
+    w←(Who m<0),' wins ',t ⋄ (|m)=|-/n:w ⋄ w,' (',(⍕|m),' with the empty squares)'
+}
+
 Board←{
     z←rl.DrawRectangle(X0-12)(Y0-12)(24+8×S)(24+8×S)frame
     z←rl.DrawRectangle X0 Y0(8×S)(8×S)felt
@@ -36,7 +42,7 @@ Board←{
 
 Status←{ ⍝ game ⍵ → headline
     c b←⍵
-    O.Terminal b:{m←O.Result ⍵ ⋄ m=0:'Game over: a draw' ⋄ 'Game over: ',(Who m<0),' wins by ',⍕|m}⍵
+    O.Terminal b:'Game over: ',Final ⍵
     ~∨/O.Moves b:(Who c),' has no move and passes'
     c≠hc:'Engine is thinking...'
     'Your move (',(Who c),')'
@@ -87,9 +93,9 @@ rl.InitWindow W H 'APL Othello'
     c b←G ⋄ mv←⍸O.Moves b ⋄ k←⊖⍣c⊢b
     rl.BeginDrawing⍬
     rl.ClearBackground bg
-    z←(26 18 txt)Mid'APL Othello'
-    z←Pawn 56 66 blk(+/k[0;]) ⋄ z←Pawn(W-120)66 wht(+/k[1;])
-    z←rl.DrawRectangle(c⊃40(W-136))92 100 4 gold                     ⍝ side to move
+    z←(24 10 txt)Mid'APL Othello'
+    z←Pawn 56 44 blk(+/k[0;]) ⋄ z←Pawn(W-120)44 wht(+/k[1;])
+    :If ~O.Terminal b ⋄ z←rl.DrawRectangle(c⊃40(W-136))64 100 4 gold ⋄ :EndIf  ⍝ side to move
     z←Board 0
     z←{⍵ Disc blk}¨⍸k[0;] ⋄ z←{⍵ Disc wht}¨⍸k[1;]
     :If (c=hc)∧~O.Terminal b
@@ -97,6 +103,12 @@ rl.InitWindow W H 'APL Othello'
         :If sq∊mv ⋄ z←sq Disc(3↑c⊃blk wht),110 ⋄ :EndIf
     :EndIf
     :If lm≥0 ⋄ x y←Cell lm ⋄ z←rl.DrawCircle x y 6 mark ⋄ :EndIf
+    :If O.Terminal b                              ⍝ game-over banner across the board
+        z←rl.DrawRectangle X0(Y0+3×S)(8×S)(2×S)(16 18 22 215)
+        z←(40(⌊Y0+S×3.35)gold)Mid'Game over'
+        z←(24(⌊Y0+S×4.15)txt)Mid Final G
+        z←(16(⌊Y0+S×4.6)dim)Mid'press N for a new game'
+    :EndIf
     z←(24(Y0+8×S+34)txt)Mid Status G
     z←(18(Y0+8×S+70)dim)Mid Info last
     z←(16(Y0+8×S+104)dim)Mid'click: move   N new   U undo   S swap sides   H hints   +/- engine time   Esc quit'
