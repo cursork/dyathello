@@ -1,6 +1,6 @@
 # Othello in Dyalog APL
 
-An Othello engine written in Dyalog APL (`⎕IO←0`). The engine is the scripted namespace `src/Othello.apln`; this document outlines the algorithms it implements.
+An [Othello](https://en.wikipedia.org/wiki/Reversi) engine written in Dyalog APL (`⎕IO←0`). The engine is the scripted namespace `src/Othello.apln`; this document outlines the algorithms it implements.
 
 ## Layout
 
@@ -15,7 +15,7 @@ An Othello engine written in Dyalog APL (`⎕IO←0`). The engine is the scripte
 
 ## Board representation
 
-A board is a `2 64` boolean array: row 0 holds the discs of the side to move, row 1 those of the opponent. Square `i` is `8⊥rank file`, so a1 is 0 and h8 is 63. Because the board is relative to the side to move, passing the turn is `⊖`, and `Play` returns the board from the opponent's point of view.
+A board is a `2 64` boolean array, an APL counterpart of a pair of [bitboards](https://www.chessprogramming.org/Bitboards): row 0 holds the discs of the side to move, row 1 those of the opponent. Square `i` is `8⊥rank file`, so a1 is 0 and h8 is 63. Because the board is relative to the side to move, passing the turn is `⊖`, and `Play` returns the board from the opponent's point of view.
 
 All board functions are rank-polymorphic: a stack of boards has shape `n 2 64`, and moves, play, terminal tests and scores are computed for every board in the stack at once.
 
@@ -23,13 +23,13 @@ All board functions are rank-polymorphic: a stack of boards has shape `n 2 64`, 
 
 The eight directions are a matrix of `(Δrank Δfile)` pairs. Each direction becomes a rotation of the 64-vector (`rot`) together with a mask of the squares a one-step shift can reach without wrapping round an edge (`mask`). `S` applies all eight shifts at once to an `(…,8,64)` array.
 
-- `Run` starts from one set of squares, steps once in every direction, keeps opponent discs, and repeats (`⍣≡`) until the runs stop growing. The result is, per direction, the contiguous opponent discs reachable from the start.
+- `Run` starts from one set of squares, steps once in every direction, keeps opponent discs, and repeats (`⍣≡`) until the runs stop growing (a [Dumb7Fill](https://www.chessprogramming.org/Dumb7Fill)-style flood fill). The result is, per direction, the contiguous opponent discs reachable from the start.
 - `Moves` runs from the side to move's discs; one more step from each run that lands on an empty square is a legal move. The eight directions are combined with `∨⌿`.
 - `Flips` runs from the played square and keeps only the runs whose next step lands on one of the mover's own discs.
 - `Play` adds the played square and the flipped discs to the mover, removes the flipped discs from the opponent, and swaps the rows.
 - `Terminal` holds when neither side has a move.
 
-`Perft` counts leaf nodes a whole ply at a time: it plays every legal move of every board in the stack in a single call. A forced pass counts as a ply, and a finished game counts as one leaf at any remaining depth.
+[`Perft`](https://www.chessprogramming.org/Perft) counts leaf nodes a whole ply at a time: it plays every legal move of every board in the stack in a single call. A forced pass counts as a ply, and a finished game counts as one leaf at any remaining depth.
 
 ## Evaluation
 
@@ -46,7 +46,7 @@ The mobility, frontier and corner-risk weights are interpolated linearly between
 
 ## Search
 
-`Search` is a fail-soft negamax with alpha-beta pruning. Its left argument is depth, alpha, beta and an optional transposition table.
+`Search` is a [fail-soft](https://www.chessprogramming.org/Fail-Soft) [negamax](https://en.wikipedia.org/wiki/Negamax) with [alpha-beta pruning](https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning). Its left argument is depth, alpha, beta and an optional transposition table.
 
 - Finished games and forced passes are resolved before the depth cutoff, and a pass costs no depth.
 - All children of a node are generated with one `Play` call. `_Leaf` gives each child its depth-0 value in one batched call: the evaluation, the exact score for a finished game, or the negated evaluation of the opponent's position after a forced pass.
@@ -55,7 +55,7 @@ The mobility, frontier and corner-risk weights are interpolated linearly between
 
 ### Transposition table
 
-`New n` makes a table with `2*n` slots. A position's key is the sum of 128 random 45-bit numbers (`zobrist`), one for each set bit of the board, which stays exact below `2*53`. The slot is the key modulo the table size, entries are always replaced, and the full key is compared on lookup.
+`New n` makes a [transposition table](https://en.wikipedia.org/wiki/Transposition_table) with `2*n` slots. A position's key is the sum of 128 random 45-bit numbers (`zobrist`), one for each set bit of the board, which stays exact below `2*53`. This is [Zobrist hashing](https://en.wikipedia.org/wiki/Zobrist_hashing) with addition in place of exclusive or, since APL has no bitwise operations on integers. The slot is the key modulo the table size, entries are always replaced, and the full key is compared on lookup.
 
 Each entry records the value, the depth, the bound type (exact, lower or upper, judged against the window the node was searched with) and the best move. An entry produces a cutoff only when it was stored at the same depth. Otherwise its move is still tried first.
 
@@ -63,9 +63,9 @@ The table also carries the search limits: a deadline and a node limit. When eith
 
 ### Iterative deepening and the endgame
 
-`ms [depth [nodes [threshold]]] Think board` searches with increasing depth until the time or node limit, returning the square, value, depth, node count, a status (complete, partial or fallback) and whether the position was solved. If a limit interrupts an iteration, the result of the last completed iteration is used.
+`ms [depth [nodes [threshold]]] Think board` uses [iterative deepening](https://en.wikipedia.org/wiki/Iterative_deepening_depth-first_search), searching with increasing depth until the time or node limit, returning the square, value, depth, node count, a status (complete, partial or fallback) and whether the position was solved. If a limit interrupts an iteration, the result of the last completed iteration is used.
 
-Depth never exceeds the number of empty squares. Since passes cost no depth, a search to that depth reaches only finished games, so the last iteration is an exact solve. It runs in two steps sharing the table: a narrow window `(¯1 1)` decides win, draw or loss, then a window chosen by that result finds the exact margin. With at most `threshold` empty squares (default 12), the search deepens only to depth 4 before solving, so a sound move is available if the solve does not finish in time.
+Depth never exceeds the number of empty squares. Since passes cost no depth, a search to that depth reaches only finished games, so the last iteration is an exact solve. It runs in two steps sharing the table: a narrow ([null-window](https://www.chessprogramming.org/Null_Window)-style) window `(¯1 1)` decides win, draw or loss, then a window chosen by that result finds the exact margin. With at most `threshold` empty squares (default 12), the search deepens only to depth 4 before solving, so a sound move is available if the solve does not finish in time.
 
 ## Usage
 
