@@ -1,1 +1,1 @@
-Moves←{m←0⌷⍤2⊢⍵ ⋄ o←1⌷⍤2⊢⍵ ⋄ (~m∨o)∧∨⌿⍤2⊢S o Run m} ⍝ legal moves for each board (…,2,64)
+Moves←{m o←Sides ⍵ ⋄ (~m∨o)∧∨⌿⍤2⊢S o Run m} ⍝ legal moves for each board (…,2,64)
