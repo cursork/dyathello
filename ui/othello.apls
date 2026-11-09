@@ -9,7 +9,7 @@ rl←0⎕Fix rlDir,'raylib.apln'
 rl.Init rlDir
 
 ⍝ layout (pixels) and palette (RGBA)
-S←80 ⋄ X0←56 ⋄ Y0←110 ⋄ W←X0+X0+8×S ⋄ H←Y0+8×S+140
+S←76 ⋄ W←H←800 ⋄ X0←⌊(W-8×S)÷2 ⋄ Y0←112                      ⍝ square window: header, board, file labels, key help
 bg←28 32 38 255 ⋄ frame←12 74 48 255 ⋄ felt←18 124 80 255 ⋄ grid←10 86 54 255
 blk←24 24 26 255 ⋄ wht←240 240 234 255 ⋄ shade←0 0 0 70 ⋄ hint←255 255 255 60
 mark←236 92 72 255 ⋄ txt←226 229 233 255 ⋄ dim←140 148 158 255 ⋄ gold←246 196 82 255
@@ -35,14 +35,14 @@ Board←{
     z←{rl.DrawLine(X0+S×⍵)Y0(X0+S×⍵)(Y0+8×S)grid}¨⍳9
     z←{rl.DrawLine X0(Y0+S×⍵)(X0+8×S)(Y0+S×⍵)grid}¨⍳9
     z←{rl.DrawCircle(X0+S×⊃⍵)(Y0+S×1⊃⍵)5 grid}¨2 6∘.,2 6
-    z←{((⌊X0+S×⍵+0.42)(Y0-38)20 dim)Text,⍵⊃'abcdefgh'}¨⍳8
-    z←{((X0-38)(⌊Y0+S×⍵+0.38)20 dim)Text ⍕8-⍵}¨⍳8
+    z←{((⌊X0+S×⍵+0.42)(Y0+8×S+18)20 dim)Text,⍵⊃'abcdefgh'}¨⍳8
+    z←{((X0-36)(⌊Y0+S×⍵+0.38)20 dim)Text ⍕8-⍵}¨⍳8
     0
 }
 
 Status←{ ⍝ game ⍵ → headline
     c b←⍵
-    O.Terminal b:'Game over: ',Final ⍵
+    O.Terminal b:Final ⍵
     ~∨/O.Moves b:(Who c),' has no move and passes'
     c≠hc:'Engine is thinking...'
     'Your move (',(Who c),')'
@@ -59,6 +59,7 @@ G←0 O.Start ⋄ hist←⍬ ⋄ hc←0 ⋄ ms←2000 ⋄ hints←1 ⋄ lm←¯1
 K←rl.KeyboardKey ⋄ LMB←rl.MouseButton.MOUSE_BUTTON_LEFT
 
 rl.InitWindow W H 'APL Othello'
+⎕←'window ',(⍕W H),' screen ',(⍕rl.GetScreenWidth⍬),' ',(⍕rl.GetScreenHeight⍬),' render ',(⍕rl.GetRenderWidth⍬),' ',⍕rl.GetRenderHeight⍬
 :While ~rl.WindowShouldClose⍬
     c b←G ⋄ mv←⍸O.Moves b ⋄ over←O.Terminal b ⋄ sq←Under rl.GetMousePosition⍬
 
@@ -93,9 +94,10 @@ rl.InitWindow W H 'APL Othello'
     c b←G ⋄ mv←⍸O.Moves b ⋄ k←⊖⍣c⊢b
     rl.BeginDrawing⍬
     rl.ClearBackground bg
-    z←(24 10 txt)Mid'APL Othello'
-    z←Pawn 56 44 blk(+/k[0;]) ⋄ z←Pawn(W-120)44 wht(+/k[1;])
-    :If ~O.Terminal b ⋄ z←rl.DrawRectangle(c⊃40(W-136))64 100 4 gold ⋄ :EndIf  ⍝ side to move
+    z←Pawn 44 46 blk(+/k[0;]) ⋄ z←Pawn(W-112)46 wht(+/k[1;])               ⍝ header: counts at the sides,
+    :If ~O.Terminal b ⋄ z←rl.DrawRectangle(c⊃24(W-132))70 100 4 gold ⋄ :EndIf  ⍝ side-to-move bar,
+    z←(22 26((O.Terminal b)⊃txt gold))Mid Status G                          ⍝ status and engine line between
+    z←(16 62 dim)Mid Info last
     z←Board 0
     z←{⍵ Disc blk}¨⍸k[0;] ⋄ z←{⍵ Disc wht}¨⍸k[1;]
     :If (c=hc)∧~O.Terminal b
@@ -109,9 +111,7 @@ rl.InitWindow W H 'APL Othello'
         z←(24(⌊Y0+S×4.15)txt)Mid Final G
         z←(16(⌊Y0+S×4.6)dim)Mid'press N for a new game'
     :EndIf
-    z←(24(Y0+8×S+34)txt)Mid Status G
-    z←(18(Y0+8×S+70)dim)Mid Info last
-    z←(16(Y0+8×S+104)dim)Mid'click: move   N new   U undo   S swap sides   H hints   +/- engine time   Esc quit'
+    z←(15(H-30)dim)Mid'click: move   N new   U undo   S swap sides   H hints   +/- engine time   Esc quit'
     rl.EndDrawing⍬
 :EndWhile
 rl.CloseWindow⍬
