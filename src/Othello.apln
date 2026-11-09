@@ -69,13 +69,11 @@
         v
     }
     Wide←{⍵,INF×¯1 1} ⍝ depth ⍵ with the full alpha-beta window
-    New←{ ⍝ empty table with 2*⍵ slots: key (¯1 empty), value, depth, bound (0 exact, 1 lower, 2 upper), move;
-        ⍝ plus limits and counters: dl deadline (⎕AI[2] ms), mx node limit (0 none), n nodes so far;
-        ⍝ configuration (oracle SearchConfig): base 1 to evaluate with the frozen baseline Eval2, ord move ordering, tt table probes and stores
-        t←⎕NS'' ⋄ s←2*⍵
-        t.(N K V D F Mv)←s(s⍴¯1)(s⍴0)(s⍴¯1)(s⍴0)(s⍴¯1)
-        t.(dl mx n ord tt)←(⌊/⍬)0 0 1 1 ⋄ t.base←0
-        t
+    New←{ ⍝ empty transposition table with 2*⍵ slots, plus the search's limits, counters and configuration
+        s←2*⍵
+        (N:s ⋄ K:s⍴¯1 ⋄ V:s⍴0 ⋄ D:s⍴¯1 ⋄ F:s⍴0 ⋄ Mv:s⍴¯1   ⍝ slots; per slot key (¯1 empty), value, depth, bound (0 exact 1 lower 2 upper), move
+         dl:⌊/⍬ ⋄ mx:0 ⋄ n:0                             ⍝ deadline (⎕AI[2] ms), node limit (0 none), nodes so far
+         ord:1 ⋄ tt:1 ⋄ base:0)                          ⍝ oracle SearchConfig: move ordering, table use, frozen baseline Eval2
     }
     Search←{ ⍝ ⍺ ≡ depth alpha beta [table]; fail-soft negamax of board ⍵ → value, best square (¯1 if none chosen)
         d a z T←4↑⍺ ⋄ t←⊃9=⎕NC'T'
