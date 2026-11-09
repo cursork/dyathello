@@ -57,23 +57,26 @@ Info←{ ⍝ last engine search result ⍵ → one line
     'Engine played ',(gm.Name s),': depth ',(⍕d),', eval ',(Num v),', ',(⍕n),' nodes'
 }
 
-game←0 eng.start ⋄ hist←⍬ ⋄ hc←0 ⋄ ms←2000 ⋄ hints←1 ⋄ lm←¯1 ⋄ last←⍬ ⋄ pend←0 ⋄ pc←0
+game←0 eng.start ⋄ hist←⍬ ⋄ hc←0 ⋄ ms←3000 ⋄ hints←1 ⋄ lm←¯1 ⋄ last←⍬ ⋄ job←¯1 ⋄ pc←0 ⋄ out←()                  ⍝ out: where the search thread leaves its result
+Stop←{job≥0:¯1⊣⎕TKILL job ⋄ ¯1}                                          ⍝ abandon the engine's search thread
 keys←rl.KeyboardKey ⋄ lmb←rl.MouseButton.MOUSE_BUTTON_LEFT
 
 rl.InitWindow width height 'APL Othello'
+rl.SetTargetFPS 0                                ⍝ pace frames with ⎕DL instead: it lets the search thread run
 ⎕←'window ',(⍕width height),' screen ',(⍕rl.GetScreenWidth⍬),' ',(⍕rl.GetScreenHeight⍬),' render ',(⍕rl.GetRenderWidth⍬),' ',⍕rl.GetRenderHeight⍬
 :While ~rl.WindowShouldClose⍬
     c b←game ⋄ mv←⍸eng.Moves b ⋄ over←eng.Terminal b ⋄ sq←Under rl.GetMousePosition⍬
 
     ⍝ input
-    :If rl.IsKeyPressed keys.KEY_N ⋄ game←0 eng.start ⋄ hist←⍬ ⋄ lm←¯1 ⋄ last←⍬ ⋄ pend←0 ⋄ :Continue ⋄ :EndIf
+    :If rl.IsKeyPressed keys.KEY_N ⋄ job←Stop 0 ⋄ game←0 eng.start ⋄ hist←⍬ ⋄ lm←¯1 ⋄ last←⍬ ⋄ :Continue ⋄ :EndIf
     :If rl.IsKeyPressed keys.KEY_H ⋄ hints←~hints ⋄ :EndIf
-    :If rl.IsKeyPressed keys.KEY_S ⋄ hc←~hc ⋄ pend←0 ⋄ :EndIf
+    :If rl.IsKeyPressed keys.KEY_S ⋄ job←Stop 0 ⋄ hc←~hc ⋄ :EndIf
     :If rl.IsKeyPressed keys.KEY_EQUAL ⋄ ms←16000⌊ms×2 ⋄ :EndIf
     :If rl.IsKeyPressed keys.KEY_MINUS ⋄ ms←250⌈ms÷2 ⋄ :EndIf
     :If (rl.IsKeyPressed keys.KEY_U)∧0<≢hist
+        job←Stop 0
         :Repeat ⋄ game lm←⊃⌽hist ⋄ hist←¯1↓hist ⋄ :Until (hc=⊃game)∨0=≢hist
-        pend←0 ⋄ last←⍬ ⋄ :Continue
+        last←⍬ ⋄ :Continue
     :EndIf
 
     ⍝ play
@@ -85,10 +88,11 @@ rl.InitWindow width height 'APL Othello'
             :If (rl.IsMouseButtonPressed lmb)∧sq∊mv
                 hist,←⊂game lm ⋄ game←(~c)(sq eng.Play b) ⋄ lm←sq
             :EndIf
-        :ElseIf pend                              ⍝ the "thinking" frame has been shown: search now
-            last←ms eng.Think b ⋄ hist,←⊂game lm ⋄ lm←⊃last ⋄ game←(~c)(lm eng.Play b) ⋄ pend←0
-        :Else
-            pend←1
+        :ElseIf job<0                             ⍝ engine to move: search in a thread so the window stays live
+            job←{out.r←ms eng.Think ⍵}&b
+        :ElseIf ~job∊⎕TNUMS                       ⍝ search finished: play its move
+            last←out.r ⋄ job←¯1 ⋄ ⎕←last
+            hist,←⊂game lm ⋄ lm←⊃last ⋄ game←(~c)(lm eng.Play b)
         :EndIf
     :EndIf
 
@@ -115,5 +119,7 @@ rl.InitWindow width height 'APL Othello'
     :EndIf
     z←(15(height-30)dim)Mid'click: move   N new   U undo   S swap sides   H hints   +/- engine time   Esc quit'
     rl.EndDrawing⍬
+    ⎕DL 1÷60                                       ⍝ about 60 frames a second; the search runs meanwhile
 :EndWhile
+job←Stop 0
 rl.CloseWindow⍬
