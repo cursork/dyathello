@@ -52,12 +52,12 @@
         ⍝ ⍺ (optional): move counts of the side to move and of the opponent
         ⍺←+/∘Moves¨⍵(⊖⍤2⊢⍵) ⋄ a t←⍺
         m o←Sides ⍵ ⋄ e←~m∨o ⋄ d←m-o
-        p←⌊1000×(60-12⌈60⌊+/e)÷48
-        B←{⍵[0]+(p×-/⌽⍵)Div 1000}
+        p←⌊48÷⍨1000×60-12⌈60⌊+/e
+        B←{⍵[0]+1000 Div⍨p×-/⌽⍵}
         v←d+.×,W
-        v+←((B 500 800)×((a-t)×1000)Div a+t+1)Div 1000
+        v+←1000 Div⍨(B 500 800)×(a+t+1)Div⍨1000×a-t
         v-←(B 10 4)×+/d×∨⌿⍤2⊢S 8 64∘⍴⍤1⊢e
-        v-←((B 1000 700)×+/(e+.×H)×d+.×Q)Div 1000
+        v-←1000 Div⍨(B 1000 700)×+/(e+.×H)×d+.×Q
         6400⌊¯6400⌈v
     }
     Leaf←{ ⍝ (E Leaf) depth-0 value under evaluator E of each board in stack ⍵, as Search would give it: exact if finished, opponent's Eval negated after a forced pass
