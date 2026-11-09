@@ -71,7 +71,7 @@
     Wide←{⍵,inf×¯1 1} ⍝ depth ⍵ with the full alpha-beta window
     New←{ ⍝ empty transposition table with 2*⍵ slots, plus the search's limits, counters and configuration
         s←2*⍵
-        (N:s ⋄ K:s⍴¯1 ⋄ V:s⍴0 ⋄ D:s⍴¯1 ⋄ F:s⍴0 ⋄ Mv:s⍴¯1   ⍝ slots; per slot key (¯1 empty), value, depth, bound (0 exact 1 lower 2 upper), move
+        (size:s ⋄ key:s⍴¯1 ⋄ val:s⍴0 ⋄ dep:s⍴¯1 ⋄ bnd:s⍴0 ⋄ mv:s⍴¯1   ⍝ slots; per slot key (¯1 empty), value, depth, bound (0 exact 1 lower 2 upper), move
          dl:⌊/⍬ ⋄ mx:0 ⋄ n:0                             ⍝ deadline (⎕AI[2] ms), node limit (0 none), nodes so far
          ord:1 ⋄ tt:1 ⋄ base:0)                          ⍝ oracle SearchConfig: move ordering, table use, frozen baseline Eval2
     }
@@ -84,17 +84,17 @@
         s←⍸Moves ⍵
         0=≢s:{∨/Moves⊖⍵:¯1,⍨-⊃(T,⍨d,-z a)Search⊖⍵ ⋄ ¯1,⍨100×Score ⍵}⍵
         d=0:¯1,⍨Ev ⍵
-        k i e←{~tt:0 0 0 ⋄ k←Key ⍵ ⋄ i←T.N|k ⋄ k i(T.K[i]=k)}⍵
-        {~e:0 ⋄ T.D[i]≠d:0 ⋄ f x←T.F[i],T.V[i] ⋄ (f=⍳3)∨.∧1,(z≤x),x≤a}0:T.V[i],T.Mv[i]
-        h←{~e:¯1 ⋄ T.D[i]≥d:T.Mv[i] ⋄ ¯1}0
+        k i e←{~tt:0 0 0 ⋄ k←Key ⍵ ⋄ i←T.size|k ⋄ k i(T.key[i]=k)}⍵
+        {~e:0 ⋄ T.dep[i]≠d:0 ⋄ f x←T.bnd[i],T.val[i] ⋄ (f=⍳3)∨.∧1,(z≤x),x≤a}0:T.val[i],T.mv[i]
+        h←{~e:¯1 ⋄ T.dep[i]≥d:T.mv[i] ⋄ ¯1}0
         c←s Play(≢s)2 64⍴⍵
         v←-Ev Leaf c ⋄ T.n+←≢c                                     ⍝ nodes: Search calls plus boards scored
         o←{ord:⍵ ⋄ ⍳≢s}⍒v ⋄ o←(o/⍨s[o]=h),o/⍨s[o]≠h  ⍝ table move first, then static value
         L←{i b m a←⍵ ⋄ i=≢o:b m ⋄ x←-⊃(T,⍨(d-1),-z a)Search c[o[i];;] ⋄ b m←(x>b)⊃(b m)(x,s[o[i]]) ⋄ a⌈←x ⋄ a≥z:b m ⋄ ∇(i+1)b m a}
         r←{d=1:(⌈/v),s[⊃⍒v] ⋄ L 0(-inf)¯1 a}0
         ~tt:r
-        T.K[i]←k ⋄ T.V[i]←⊃r ⋄ T.D[i]←d ⋄ T.Mv[i]←1⊃r
-        w←⊃r ⋄ T.F[i]←(d>1)×(z≤w)+2×w≤a
+        T.key[i]←k ⋄ T.val[i]←⊃r ⋄ T.dep[i]←d ⋄ T.mv[i]←1⊃r
+        w←⊃r ⋄ T.bnd[i]←(d>1)×(z≤w)+2×w≤a
         r
     }
     Think←{ ⍝ ⍺ ≡ ms [depth [nodes [threshold]]]: search board ⍵ (with a legal move) within limits
