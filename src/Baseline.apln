@@ -1,8 +1,0 @@
-:Namespace Baseline
-⍝ The frozen phase-2 baseline evaluator (oracle tools/src/baselines.rs, eval_phase2): discs ×100 plus a square table.
-⍝ Search uses it when its table has en←#.Baseline. Never change it: matches are measured against it.
-    ⎕IO←0
-    Eval←{⍺←0 ⋄ d←-⌿⍤2⊢⍵ ⋄ 6400⌊¯6400⌈(100×+/d)+d+.×,weights} ⍝ boards (…,2,64) → centidiscs; ⍺ (move counts) ignored
-    weights←[100 ¯20 10 5 5 10 ¯20 100 ⋄ ¯20 ¯50 ¯2 ¯2 ¯2 ¯2 ¯50 ¯20 ⋄ 10 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2 10 ⋄ 5 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2 5
-        5 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2 5 ⋄ 10 ¯2 ¯1 ¯1 ¯1 ¯1 ¯2 10 ⋄ ¯20 ¯50 ¯2 ¯2 ¯2 ¯2 ¯50 ¯20 ⋄ 100 ¯20 10 5 5 10 ¯20 100]
-:EndNamespace

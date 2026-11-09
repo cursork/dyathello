@@ -52,22 +52,21 @@
         s←2*⍵
         (size:s ⋄ key:s⍴¯1 ⋄ val:s⍴0 ⋄ dep:s⍴¯1 ⋄ bnd:s⍴0 ⋄ mv:s⍴¯1   ⍝ slots; per slot key (¯1 empty), value, depth, bound (0 exact 1 lower 2 upper), move
          dl:⌊/⍬ ⋄ mx:0 ⋄ n:0                             ⍝ deadline (⎕AI[2] ms), node limit (0 none), nodes so far
-         ord:1 ⋄ tt:1 ⋄ en:⎕THIS)                        ⍝ oracle SearchConfig: move ordering, table use, namespace whose Eval to use
+         ord:1 ⋄ tt:1)                                  ⍝ oracle SearchConfig: move ordering, table use
     }
     Search←{ ⍝ ⍺ ≡ depth alpha beta [table]; fail-soft negamax of board ⍵ → value, best square (¯1 if none chosen)
         d a z←3↑⍺ ⋄ tab←3{⍺=≢⍵:(n:0) ⋄ ⍺⊃⍵}⍺                        ⍝ no table: a namespace that only counts nodes
-        tt ord en dl mx←tab⎕VGET('tt' 0)('ord' 1)('en' ⎕THIS)('dl'(⌊/⍬))('mx' 0)
+        tt ord dl mx←tab⎕VGET('tt' 0)('ord' 1)('dl'(⌊/⍬))('mx' 0)
         (⎕AI[2]≥dl)∨(mx>0)∧tab.n≥mx:⎕SIGNAL 999                      ⍝ out of time or nodes: abandon (nothing stored)
         tab.n+←1
-        Ev←{⍺←⊢ ⋄ ⍺ en.Eval ⍵}
         s←⍸Moves ⍵
         0=≢s:{∨/Moves⊖⍵:¯1,⍨-⊃(tab,⍨d,-z a)Search⊖⍵ ⋄ ¯1,⍨100×Score ⍵}⍵
-        d=0:¯1,⍨Ev ⍵
+        d=0:¯1,⍨Eval ⍵
         k i e←{~tt:0 0 0 ⋄ k←Key ⍵ ⋄ i←tab.size|k ⋄ k i(tab.key[i]=k)}⍵
         {~e:0 ⋄ tab.dep[i]≠d:0 ⋄ f x←tab.bnd[i],tab.val[i] ⋄ (f=⍳3)∨.∧1,(z≤x),x≤a}0:tab.val[i],tab.mv[i]
         h←{~e:¯1 ⋄ tab.dep[i]≥d:tab.mv[i] ⋄ ¯1}0
         c←s Play(≢s)2 64⍴⍵
-        v←-Ev Leaf c ⋄ tab.n+←≢c                                     ⍝ nodes: Search calls plus boards scored
+        v←-Eval Leaf c ⋄ tab.n+←≢c                                     ⍝ nodes: Search calls plus boards scored
         o←{ord:⍵ ⋄ ⍳≢s}⍒v ⋄ o←(o/⍨s[o]=h),o/⍨s[o]≠h  ⍝ table move first, then static value
         L←{i b m a←⍵ ⋄ i=≢o:b m ⋄ x←-⊃(tab,⍨(d-1),-z a)Search c[o[i];;] ⋄ b m←(x>b)⊃(b m)(x,s[o[i]]) ⋄ a⌈←x ⋄ a≥z:b m ⋄ ∇(i+1)b m a}
         r←{d=1:(⌈/v),s[⊃⍒v] ⋄ L 0(-inf)¯1 a}0

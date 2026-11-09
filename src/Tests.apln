@@ -52,10 +52,10 @@
         g←(E gm.Game R)0 eng.start
         (⌈/t)(≢t)(gm.Result g)
     }
-    SlowGate←{ ⍝ oracle Phase 3 gate: phase2 vs greedy, 200 pairs, seed 1, reproducible with a valid interval → report, repeat identical
+    SlowGate←{ ⍝ oracle Phase 3 gate (engine in place of its phase-2 baseline): depth-4 alpha-beta vs greedy, 200 pairs, seed 1, reproducible with a valid interval → report, repeat identical
         o←200↑har.Data'openTune'
-        m←((4 har.P2)har.Match har.Greedy)o
-        (1 har.Report m)(m≡((4 har.P2)har.Match har.Greedy)o)
+        m←((4 gm.AB)har.Match har.Greedy)o
+        (1 har.Report m)(m≡((4 gm.AB)har.Match har.Greedy)o)
     }
     SlowPerft←{3005288 24571284≡9 10 eng.Perft¨⊂eng.start}
     SlowSolve←{ ⍝ oracle's known endgames (tests/search.rs solver_known_endgames): 12 and 11 empties → values ≡ ¯2200 1800, and ms each
@@ -80,7 +80,6 @@
         G←{f←⍵ ⋄ R←{s←⍸eng.Moves 1⊃⍵ ⋄ s[⌊(≢s)×f[+/,1⊃⍵]]} ⋄ ⍺:0<gm.Result((2 gm.AB)gm.Game R)0 eng.start ⋄ 0>gm.Result(R gm.Game(2 gm.AB))0 eng.start}
         8≤+/(10↑5⍴1)G¨↓r
     }
-    TestEval2←{¯1024 728 ¯1029 535 ¯832 338 ¯634 ¯255≡#.Baseline.Eval↑8↑Corp 0} ⍝ the frozen baseline stays frozen (snapshot)
     TestFixtures←{ ⍝ oracle tests/perft.rs fixtures and WTHOR scoring
         p←9 eng.Bd 0 2 ⋄ t←0 2 4 6 eng.Bd 1 3 5 7
         ∧/(

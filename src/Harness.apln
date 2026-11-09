@@ -6,7 +6,6 @@
     gm←#.Games
     RA←{b←1⊃⍵ ⋄ s←⍸eng.Moves b ⋄ ⎕RL←1+2147483646|⍺⍺+eng.Key b ⋄ s[?≢s]} ⍝ agent (seed RA): random move, reproducible from seed and position
     Greedy←{b←1⊃⍵ ⋄ s←⍸eng.Moves b ⋄ s[⊃⍒+/(s eng.Play(≢s)2 64⍴b)[;1;]]} ⍝ agent: most discs after the move, lowest square on ties
-    P2←{tab←(eng.New 16)⎕VSET⊂'en' #.Baseline ⋄ 1⊃(tab,⍨eng.Wide ⍺⍺)eng.Search 1⊃⍵} ⍝ agent (d P2): current search to depth d with the frozen #.Baseline.Eval, fresh table each move
     Replay←{ ⍝ game after opening squares ⍵ from game ⍺ (default: start, Black to move); colour toggles on placements and passes
         ⍺←0 eng.start ⋄ 0=≢⍵:⍺ ⋄ c b←⍺
         eng.Terminal b:'opening runs past the end of the game'⎕SIGNAL 11

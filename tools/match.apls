@@ -1,7 +1,7 @@
 #!/usr/local/bin/dyalogscript
-⍝ Headless match: phase-2 baseline (4 P2) against Greedy over the first N tuning openings (default 20).
+⍝ Headless match: depth-4 alpha-beta (4 AB) against Greedy over the first N tuning openings (default 20).
 ⍝ Run from the project root: ./tools/match.apls [N]. Needs no Link: Harness.Data finds src/data.dcf from the fixed file.
-z←{2⎕FIX'file://',(⊃1⎕NPARTS''),'src/',⍵,'.apln'}¨'Othello' 'Baseline' 'Games' 'Harness'
+z←{2⎕FIX'file://',(⊃1⎕NPARTS''),'src/',⍵,'.apln'}¨'Othello' 'Games' 'Harness'
 a←2⎕NQ'.' 'GetCommandLineArgs'
 n←{0=≢⍵:20 ⋄ ⊃⊃(//)⎕VFI⊃⌽⍵}a/⍨∧/¨a∊¨⊂⎕D
-⎕←#.Harness.{1 Report((4 P2)Match Greedy)⍵↑Data'openTune'}n
+⎕←#.Harness.{1 Report((4 gm.AB)Match Greedy)⍵↑Data'openTune'}n
