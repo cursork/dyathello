@@ -11,7 +11,7 @@
     Flips←{(m o)←Sides ⍵ ⋄ x←o Run ⍺∘.=⍳64 ⋄ ∨⌿⍤2⊢x∧⍤1 0∨/(8 64∘⍴⍤1⊢m)∧S x} ⍝ discs flipped by playing squares ⍺ on boards ⍵
     Play←{f←⍺ Flips ⍵ ⋄ ⊖⍤2⊢⍵≠(f∨⍺∘.=⍳64),[¯0.5]⍤1⊢f} ⍝ play squares ⍺ on boards ⍵; results are from the opponent's view
     Terminal←{~∨/⍵∨⍥Moves⊖⍤2⊢⍵} ⍝ neither side can move, per board
-    Score←{d+(×d)×64-+/c⊣d←-/c←+/⍵} ⍝ WTHOR disc difference: empties go to the winner
+    Score←{c←+/⍵ ⋄ d←-/c ⋄ d+(×d)×64-+/c} ⍝ WTHOR disc difference: empties go to the winner
     Perft←{ ⍝ leaf count to depth ⍺ from board(s) ⍵, a ply at a time; a pass is a ply, a terminal node counts 1
         b←⍵⍴⍨¯3↑1,⍴⍵
         ⍺=0:≢b
@@ -22,7 +22,7 @@
         t←~∨/Moves p
         (+/t)+(⍺-1)∇(s Play b[i;;])⍪p⌿⍨~t
     }
-    Key←{zobrist+.×⍨⍵⍴⍨128,⍨¯2↓⍴⍵} ⍝ hash of each board: sum of random 45-bit numbers over its 128 bits, exact below 2*53
+    Key←{zobrist+.×⍨,⍤2⊢⍵} ⍝ hash of each board: sum of random 45-bit numbers over its 128 bits, exact below 2*53
 
 ⍝ ─── Evaluation and search (scores in centidiscs)
     Div←(××⌊⍤|)÷ ⍝ integer division truncating toward zero
@@ -42,8 +42,8 @@
         (a t)←+/∘Moves¨⍵(⊖⍤2⊢⍵)
         v←(a t)⍺⍺ ⍵
         ~0∊a:v
-        p←(a=0)∧t>0 ⋄ v[⍸p]←-(p∘/¨t a)⍺⍺⊖⍤2⊢p⌿⍵            ⍝ forced pass: the opponent's view, negated
-        f←0=a+t ⋄ v[⍸f]←100×Score f⌿⍵                       ⍝ finished: exact
+        p←(a=0)∧t>0 ⋄ (p/v)←-(p∘/¨t a)⍺⍺⊖⍤2⊢p⌿⍵            ⍝ forced pass: the opponent's view, negated
+        f←0=a+t ⋄ (f/v)←100×Score f⌿⍵                       ⍝ finished: exact
         v
     }
     Wide←{⍵,inf×¯1 1} ⍝ depth ⍵ with the full alpha-beta window
