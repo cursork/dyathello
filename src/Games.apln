@@ -1,0 +1,29 @@
+:Namespace Games
+⍝ Squares, pictures, the game loop and agents. A game is colour board (colour 0: Black to move).
+⍝ An agent maps a game to a square (¯1 stops): (A Game B) 0 eng.start plays A as Black.
+    ⎕IO←0
+    eng←#.Othello
+    Name←{r f←8 8⊤⍵ ⋄ 'abcdefgh'[f],⎕D[1+r]} ⍝ square ⍵ as 'd3'
+    Sq←{2≠≢⍵:¯1 ⋄ 8∊i←'abcdefgh' '12345678'⍳¨⍵:¯1 ⋄ 8⊥⌽i} ⍝ square from 'd3'; ¯1 if malformed
+    Show←{ ⍝ picture of game ⍵ ≡ colour board (colour 0: Black to move), in the oracle's format
+        c b←⍵ ⋄ k←⊖⍣c⊢b
+        g←'87654321',⊖8 8⍴'.XO'[1 2+.×k]
+        ↑(⊂' abcdefgh'),(↓g),⊂(c⊃'Black' 'White'),' to move. Black ',(⍕+/k[0;]),', White ',(⍕+/k[1;]),', legal:',∊' ',¨Name¨⍸eng.Moves b
+    }
+    Parse←{c←'W'=⊃⍵[9;] ⋄ c(⊖⍣c⊢'XO'∘.=,⊖⍵[1+⍳8;1+⍳8])} ⍝ game from its picture; inverse of Show
+    Game←{ ⍝ agent ⍺⍺ moves now, ⍵⍵ next; ⍵ is (colour board); an agent maps a game to a square, or ¯1 to stop
+        c b←⍵
+        eng.Terminal b:⍵
+        ~∨/eng.Moves b:(⍵⍵ ∇∇ ⍺⍺)(~c)(⊖b)
+        s←⍺⍺ ⍵
+        s<0:⍵
+        s∊⍸eng.Moves b:(⍵⍵ ∇∇ ⍺⍺)(~c)(s eng.Play b)
+        'illegal move'⎕SIGNAL 11
+    }
+    Rnd←{s←⍸eng.Moves 1⊃⍵ ⋄ s[?≢s]} ⍝ agent: random legal move
+    Human←{⎕←Show ⍵ ⋄ x←⎕C(' '≠x)/x←⍞ ⋄ x≡,'q':¯1 ⋄ s←Sq x ⋄ s∊⍸eng.Moves 1⊃⍵:s ⋄ ⎕←'Illegal move' ⋄ ∇⍵} ⍝ agent: ask at the keyboard; q quits
+    Result←{c b←⍵ ⋄ (¯1*c)×eng.Score b} ⍝ Black's WTHOR margin of finished game ⍵
+
+    AB←{1⊃(eng.Wide ⍺⍺)eng.Search 1⊃⍵} ⍝ agent: alpha-beta to depth ⍺⍺
+    TH←{⊃⍺⍺ eng.Think 1⊃⍵} ⍝ agent: iterative deepening within limits ⍺⍺ ≡ ms [depth [nodes]]
+:EndNamespace

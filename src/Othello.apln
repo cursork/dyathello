@@ -25,28 +25,6 @@
     }
     Key←{zobrist+.×⍨⍵⍴⍨128,⍨¯2↓⍴⍵} ⍝ hash of each board: sum of random 45-bit numbers over its 128 bits, exact below 2*53
 
-⍝ ─── Squares, pictures, games and agents
-    Name←{r f←8 8⊤⍵ ⋄ 'abcdefgh'[f],⎕D[1+r]} ⍝ square ⍵ as 'd3'
-    Sq←{2≠≢⍵:¯1 ⋄ 8∊i←'abcdefgh' '12345678'⍳¨⍵:¯1 ⋄ 8⊥⌽i} ⍝ square from 'd3'; ¯1 if malformed
-    Show←{ ⍝ picture of game ⍵ ≡ colour board (colour 0: Black to move), in the oracle's format
-        c b←⍵ ⋄ k←⊖⍣c⊢b
-        g←'87654321',⊖8 8⍴'.XO'[1 2+.×k]
-        ↑(⊂' abcdefgh'),(↓g),⊂(c⊃'Black' 'White'),' to move. Black ',(⍕+/k[0;]),', White ',(⍕+/k[1;]),', legal:',∊' ',¨Name¨⍸Moves b
-    }
-    Parse←{c←'W'=⊃⍵[9;] ⋄ c(⊖⍣c⊢'XO'∘.=,⊖⍵[1+⍳8;1+⍳8])} ⍝ game from its picture; inverse of Show
-    Game←{ ⍝ agent ⍺⍺ moves now, ⍵⍵ next; ⍵ is (colour board); an agent maps a game to a square, or ¯1 to stop
-        c b←⍵
-        Terminal b:⍵
-        ~∨/Moves b:(⍵⍵ ∇∇ ⍺⍺)(~c)(⊖b)
-        s←⍺⍺ ⍵
-        s<0:⍵
-        s∊⍸Moves b:(⍵⍵ ∇∇ ⍺⍺)(~c)(s Play b)
-        'illegal move'⎕SIGNAL 11
-    }
-    Rnd←{s←⍸Moves 1⊃⍵ ⋄ s[?≢s]} ⍝ agent: random legal move
-    Human←{⎕←Show ⍵ ⋄ x←⎕C(' '≠x)/x←⍞ ⋄ x≡,'q':¯1 ⋄ s←Sq x ⋄ s∊⍸Moves 1⊃⍵:s ⋄ ⎕←'Illegal move' ⋄ ∇⍵} ⍝ agent: ask at the keyboard; q quits
-    Result←{c b←⍵ ⋄ (¯1*c)×Score b} ⍝ Black's WTHOR margin of finished game ⍵
-
 ⍝ ─── Evaluation and search (scores in centidiscs)
     Div←(××⌊⍤|)÷ ⍝ integer division truncating toward zero, like Rust
     Eval←{ ⍝ oracle evaluate in centidiscs (±6400) for each board (…,2,64): table, mobility, frontier, corner risk, blended by phase
@@ -117,8 +95,6 @@
         G←{d r←⍵ ⋄ d>n:r ⋄ 999::r ⋄ v s←(tab,⍨Wide d)Search b ⋄ ∇(d+1)(s v d tab.n(d<n)0)}
         G 1 f
     }
-    AB←{1⊃(Wide ⍺⍺)Search 1⊃⍵} ⍝ agent: alpha-beta to depth ⍺⍺
-    TH←{⊃⍺⍺ Think 1⊃⍵} ⍝ agent: iterative deepening within limits ⍺⍺ ≡ ms [depth [nodes]]
 
 ⍝ ─── Constants
     inf←1000000

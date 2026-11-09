@@ -3,7 +3,9 @@
 ⍝ Click to move. N new game, U undo, S swap sides, H hints, + / - engine time, Esc quit.
 ⎕IO←0
 root←⊃1⎕NPARTS''
-z←2⎕FIX'file://',root,'src/Othello.apln' ⋄ eng←#.Othello
+z←{2⎕FIX'file://',root,'src/',⍵,'.apln'}¨'Othello' 'Games'
+eng←#.Othello
+gm←#.Games
 rlDir←root,'vendor/raylibAPL/link/'
 rl←0⎕Fix rlDir,'raylib.apln'
 rl.Init rlDir
@@ -24,7 +26,7 @@ Who←{⍵⊃'Black' 'White'}
 Num←{((⍵<0)⊃'+-'),2⍕|⍵÷100}                                          ⍝ centidiscs as signed discs
 
 Final←{ ⍝ finished game ⍵ → 'White wins 60-3' (WTHOR margin noted when empty squares count)
-    c b←⍵ ⋄ n←+/⊖⍣c⊢b ⋄ m←eng.Result ⍵ ⋄ t←(⍕⌈/n),'-',⍕⌊/n
+    c b←⍵ ⋄ n←+/⊖⍣c⊢b ⋄ m←gm.Result ⍵ ⋄ t←(⍕⌈/n),'-',⍕⌊/n
     m=0:'a draw, ',t
     w←(Who m<0),' wins ',t ⋄ (|m)=|-/n:w ⋄ w,' (',(⍕|m),' with the empty squares)'
 }
@@ -51,8 +53,8 @@ Status←{ ⍝ game ⍵ → headline
 Info←{ ⍝ last engine search result ⍵ → one line
     0=≢⍵:'Engine plays ',(Who~hc),', ',(⍕ms÷1000),' s per move'
     s v d n st so←⍵
-    so:'Engine played ',(eng.Name s),': solved, ',{⍵=0:'draws' ⋄ ((⍵>0)⊃'loses' 'wins'),' by ',⍕|⍵÷100}v
-    'Engine played ',(eng.Name s),': depth ',(⍕d),', eval ',(Num v),', ',(⍕n),' nodes'
+    so:'Engine played ',(gm.Name s),': solved, ',{⍵=0:'draws' ⋄ ((⍵>0)⊃'loses' 'wins'),' by ',⍕|⍵÷100}v
+    'Engine played ',(gm.Name s),': depth ',(⍕d),', eval ',(Num v),', ',(⍕n),' nodes'
 }
 
 game←0 eng.start ⋄ hist←⍬ ⋄ hc←0 ⋄ ms←2000 ⋄ hints←1 ⋄ lm←¯1 ⋄ last←⍬ ⋄ pend←0 ⋄ pc←0

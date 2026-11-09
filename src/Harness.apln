@@ -3,6 +3,7 @@
 ⍝ (A Match B) openings → per pair, A's points as Black then White; seed Report result → one line of text.
     ⎕IO←0
     eng←#.Othello
+    gm←#.Games
     RA←{b←1⊃⍵ ⋄ s←⍸eng.Moves b ⋄ ⎕RL←1+2147483646|⍺⍺+eng.Key b ⋄ s[?≢s]} ⍝ agent (seed RA): random move, reproducible from seed and position
     Greedy←{b←1⊃⍵ ⋄ s←⍸eng.Moves b ⋄ s[⊃⍒+/(s eng.Play(≢s)2 64⍴b)[;1;]]} ⍝ agent: most discs after the move, lowest square on ties
     P2←{tab←(eng.New 16)⎕VSET⊂'en' #.Baseline ⋄ 1⊃(tab,⍨eng.Wide ⍺⍺)eng.Search 1⊃⍵} ⍝ agent (d P2): current search to depth d with the frozen #.Baseline.Eval, fresh table each move
@@ -15,10 +16,10 @@
     }
     Done←{eng.Terminal 1⊃⍵:⍵ ⋄ 'agent stopped with legal moves'⎕SIGNAL 11} ⍝ a match game must be played to the end
     Duel←{ ⍝ agent ⍺⍺ plays Black, ⍵⍵ White, from game ⍵ → finished game
-        ⊃⍵:Done(⍵⍵ eng.Game ⍺⍺)⍵
-        Done(⍺⍺ eng.Game ⍵⍵)⍵
+        ⊃⍵:Done(⍵⍵ gm.Game ⍺⍺)⍵
+        Done(⍺⍺ gm.Game ⍵⍵)⍵
     }
-    Pts←{0.5×1+×eng.Result ⍵} ⍝ Black's points for finished game ⍵: win 1, draw ½, loss 0
+    Pts←{0.5×1+×gm.Result ⍵} ⍝ Black's points for finished game ⍵: win 1, draw ½, loss 0
     Pair←{g←Replay ⍵ ⋄ (Pts(⍺⍺ Duel ⍵⍵)g),1-Pts(⍵⍵ Duel ⍺⍺)g} ⍝ A ≡ ⍺⍺'s points from opening ⍵ as Black, then as White
     Match←{↑(⍺⍺ Pair ⍵⍵)¨↓⍵} ⍝ agents ⍺⍺ (A) and ⍵⍵ (B) over openings ⍵ (one per row) → per pair: A's points in its two games
     Boot←{ ⍝ seed ⍺; pair scores ⍵ → mean low high informative (oracle stats policy); ⍬ if no pairs

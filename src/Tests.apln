@@ -5,6 +5,7 @@
     ⎕IO←0
     eng←#.Othello
     har←#.Harness
+    gm←#.Games
     RunTests←{t←{⍵/⍨(⊂'Test')≡¨4↑¨⍵}⎕NL ¯3 ⋄ t/⍨~{⍎⍵,' 0'}¨t} ⍝ names of failing tests
     NRay←{c←⍺∘+¨⍵∘×¨1+⍳7 ⋄ 8⊥¨c/⍨∧\{∧/(⍵≥0)∧⍵<8}¨c} ⍝ squares walked from (rank file) ⍺ in direction ⍵
     NFlips←{ ⍝ naive Flips: walk coordinates from square ⍺ on board ⍵
@@ -48,8 +49,8 @@
         t←⍬ ⋄ r←?70⍴0
         E←{s←⎕AI[2] ⋄ m←⊃5000 eng.Think 1⊃⍵ ⋄ t,←⎕AI[2]-s ⋄ m}
         R←{s←⍸eng.Moves 1⊃⍵ ⋄ s[⌊(≢s)×r[+/,1⊃⍵]]}
-        g←(E eng.Game R)0 eng.start
-        (⌈/t)(≢t)(eng.Result g)
+        g←(E gm.Game R)0 eng.start
+        (⌈/t)(≢t)(gm.Result g)
     }
     SlowGate←{ ⍝ oracle Phase 3 gate: phase2 vs greedy, 200 pairs, seed 1, reproducible with a valid interval → report, repeat identical
         o←200↑har.Data'openTune'
@@ -76,7 +77,7 @@
     }
     TestEngine←{ ⍝ depth-2 alpha-beta beats a (seeded) random player from both colours
         ⎕RL←23 ⋄ r←?10 70⍴0
-        G←{f←⍵ ⋄ R←{s←⍸eng.Moves 1⊃⍵ ⋄ s[⌊(≢s)×f[+/,1⊃⍵]]} ⋄ ⍺:0<eng.Result((2 eng.AB)eng.Game R)0 eng.start ⋄ 0>eng.Result(R eng.Game(2 eng.AB))0 eng.start}
+        G←{f←⍵ ⋄ R←{s←⍸eng.Moves 1⊃⍵ ⋄ s[⌊(≢s)×f[+/,1⊃⍵]]} ⋄ ⍺:0<gm.Result((2 gm.AB)gm.Game R)0 eng.start ⋄ 0>gm.Result(R gm.Game(2 gm.AB))0 eng.start}
         8≤+/(10↑5⍴1)G¨↓r
     }
     TestEval2←{¯1024 728 ¯1029 535 ¯832 338 ¯634 ¯255≡#.Baseline.Eval↑8↑Corp 0} ⍝ the frozen baseline stays frozen (snapshot)
@@ -91,14 +92,14 @@
             1=0 eng.Perft eng.start
         )
     }
-    TestGame←{g←(eng.Rnd eng.Game eng.Rnd)0 eng.start ⋄ ∧/(eng.Terminal 1⊃g ⋄ 64≥|eng.Result g)}
+    TestGame←{g←(gm.Rnd gm.Game gm.Rnd)0 eng.start ⋄ ∧/(eng.Terminal 1⊃g ⋄ 64≥|gm.Result g)}
     TestHarness←{ ⍝ Phase 3 harness
-        o←4↑har.Data'openTune' ⋄ m←((2 eng.AB)har.Match(2 eng.AB))o
+        o←4↑har.Data'openTune' ⋄ m←((2 gm.AB)har.Match(2 gm.AB))o
         r←40÷⍨+/,(1 har.RA)har.Match(2 har.RA)20↑har.Data'openVal'
         Bad←{¯1} ⋄ Ill←{64}
         ∧/(
             ∧/0.5=2÷⍨+/m                         ⍝ equal deterministic agents score exactly ½ per pair
-            m≡((2 eng.AB)har.Match(2 eng.AB))o               ⍝ matches repeat exactly
+            m≡((2 gm.AB)har.Match(2 gm.AB))o               ⍝ matches repeat exactly
             (r≥0.25)∧r≤0.75                      ⍝ random against random: sanity
             {11::1 ⋄ 0⊣(Bad har.Pair har.Greedy)⊃↓o}0    ⍝ stopping while legal moves exist aborts
             {11::1 ⋄ 0⊣(Ill har.Pair har.Greedy)⊃↓o}0    ⍝ an illegal square aborts
@@ -132,7 +133,7 @@
            '1........'
            'Black to move. Black 2, White 2, legal: d3 c4 f5 e6']
         p←3 Positions 3
-        ∧/(e≡eng.Show 0 eng.start ⋄ ∧/(2|⍳≢p){(⍺ ⍵)≡eng.Parse eng.Show ⍺ ⍵}¨p)
+        ∧/(e≡gm.Show 0 eng.start ⋄ ∧/(2|⍳≢p){(⍺ ⍵)≡gm.Parse gm.Show ⍺ ⍵}¨p)
     }
     TestSolve←{ ⍝ Phase 6 solver
         forever←⌊/⍬ ⋄ g←{⍵/⍨6={+/~∨⌿⍵}¨⍵}{⍵/⍨{∨/eng.Moves ⍵}¨⍵}31 Positions 12 ⋄ s←{forever 64 0 14 eng.Think ⍵}¨g
@@ -152,8 +153,8 @@
         )
     }
     TestSplits←{s x←har.Splits har.Data¨'openTune' 'openVal' 'openFinal' ⋄ ∧/(x=0 ⋄ s[;0 1 2 4]≡3 4⍴512 0 8 1 ⋄ ∧/s[;3]≥20)} ⍝ frozen opening sets: oracle's split rules
-    TestSq←{∧/(0 63 19 ¯1 ¯1 ¯1 ¯1≡eng.Sq¨'a1' 'h8' 'd3' 'i1' 'a9' 'a' 'a10' ⋄ (⍳64)≡eng.Sq¨eng.Name¨⍳64)}
-    TestStart←{∧/(eng.start≡(eng.Sq¨'d5' 'e4')eng.Bd eng.Sq¨'d4' 'e5' ⋄ (⍸eng.Moves eng.start)≡{⍵[⍋⍵]}eng.Sq¨'c4' 'd3' 'e6' 'f5')} ⍝ built from coordinates, not the constant
+    TestSq←{∧/(0 63 19 ¯1 ¯1 ¯1 ¯1≡gm.Sq¨'a1' 'h8' 'd3' 'i1' 'a9' 'a' 'a10' ⋄ (⍳64)≡gm.Sq¨gm.Name¨⍳64)}
+    TestStart←{∧/(eng.start≡(gm.Sq¨'d5' 'e4')eng.Bd gm.Sq¨'d4' 'e5' ⋄ (⍸eng.Moves eng.start)≡{⍵[⍋⍵]}gm.Sq¨'c4' 'd3' 'e6' 'f5')} ⍝ built from coordinates, not the constant
     TestStats←{ ⍝ oracle stats policy
         f←1 har.Boot 10⍴1 ⋄ b←1 har.Boot 20⍴1 0.5 0 1
         ∧/(
