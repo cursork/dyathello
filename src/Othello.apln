@@ -349,7 +349,10 @@
     }
 
 ⍝ ─── Data files in data/ next to this script (opening sets, corpus, oracle fixtures)
-    Data←{⎕SE.Dyalog.Array.Deserialise⊃⎕NGET((⊃1⎕NPARTS ⎕SE.Link.GetFileName(⍕⎕THIS),'.Data'),'data/',⍵,'.apla')1}
+    Data←{ ⍝ matrix in data/⍵.apla, next to the file this namespace was fixed from (no Link or ⎕SE needed)
+        l←⊃⎕NGET((⊃1⎕NPARTS 3⊃5179⌶⍕⎕THIS),'data/',⍵,'.apla')1
+        ⍎'[',(¯3↓∊(1↓¯1↓l),¨⊂' ⋄ '),']'       ⍝ each file is one [ … ] matrix, a row per line
+    }
 
 ⍝ ─── Constants
     inf←1000000
