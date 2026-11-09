@@ -107,10 +107,10 @@
         tab←(New 20)⎕VSET('dl'(⎕AI[2]+ms))('mx'x) ⋄ b←⍵ ⋄ e←+/~∨⌿b
         f←(⊃⍸Moves b)(Eval b)0 0 2 0
         e≤th:{
-            w←{999::f ⋄ v s←(e,¯1 1,tab)Search b ⋄ s v 0 tab.n 1 0}0
+            w←{999::f ⋄ v s←(tab,⍨e ¯1 1)Search b ⋄ s v 0 tab.n 1 0}0
             2=4⊃w:w
             a z←¯1 1×1⌈inf×(1⊃w)×¯1 1  ⍝ win: ¯1 inf, loss: -inf 1, draw: ¯1 1
-            999::w ⋄ v s←(e,a,z,tab)Search b ⋄ s v 0 tab.n 0 1
+            999::w ⋄ v s←(tab,⍨e a z)Search b ⋄ s v 0 tab.n 0 1
         }0
         n⌊←e
         G←{d r←⍵ ⋄ d>n:r ⋄ 999::r ⋄ v s←(tab,⍨Wide d)Search b ⋄ ∇(d+1)(s v d tab.n(d<n)0)}
