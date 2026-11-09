@@ -5,7 +5,7 @@
     eng←#.Othello
     Name←{(r f)←8 8⊤⍵ ⋄ 'abcdefgh'[f],⎕D[1+r]} ⍝ square ⍵ as 'd3'
     Sq←{2≠≢⍵:¯1 ⋄ 8∊i←'abcdefgh' '12345678'⍳¨⍵:¯1 ⋄ 8⊥⌽i} ⍝ square from 'd3'; ¯1 if malformed
-    Show←{ ⍝ picture of game ⍵ ≡ colour board (colour 0: Black to move), in the oracle's format
+    Show←{ ⍝ picture of game ⍵ ≡ colour board (colour 0: Black to move): a line per rank, then a status line
         (c b)←⍵ ⋄ k←⊖⍣c⊢b
         g←'87654321',⊖8 8⍴'.XO'[1 2+.×k]
         ↑(⊂' abcdefgh'),(↓g),⊂(c⊃'Black' 'White'),' to move. Black ',(⍕+/k[0;]),', White ',(⍕+/k[1;]),', legal:',∊' ',¨Name¨⍸eng.Moves b
