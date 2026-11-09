@@ -271,7 +271,16 @@
     TestPerft←{4 12 56 244 1396 8200 55092 390216≡(1+⍳8)Perft¨⊂start}
     TestShift←{∧/{(S 8 64⍴⍵=⍳64)≡↑{(⍳64)∊⍵↑⍨1⌊≢⍵}¨(⊂8 8⊤⍵)NRay¨↓dirs}¨⍳64}
     TestShow←{ ⍝ start picture matches the oracle; Parse inverts Show for both colours
-        e←↑' abcdefgh' '8........' '7........' '6........' '5...XO...' '4...OX...' '3........' '2........' '1........' 'Black to move. Black 2, White 2, legal: d3 c4 f5 e6'
+        e←[' abcdefgh'
+           '8........'
+           '7........'
+           '6........'
+           '5...XO...'
+           '4...OX...'
+           '3........'
+           '2........'
+           '1........'
+           'Black to move. Black 2, White 2, legal: d3 c4 f5 e6']
         (e≡Show 0 start)∧∧/(2|⍳≢p){(⍺ ⍵)≡Parse Show ⍺ ⍵}¨p←3 Positions 3
     }
     TestSolve←{ ⍝ Phase 6: solve ≡ plain minimax at 6 empties; win/draw/loss first; partial after WDL; fallback inside WDL; WDL bounds reused
