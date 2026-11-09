@@ -120,7 +120,7 @@
     TH←{⊃⍺⍺ Think 1⊃⍵} ⍝ agent: iterative deepening within limits ⍺⍺ ≡ ms [depth [nodes]]
 
 ⍝ ─── Match harness: frozen baseline, agents, opening replay, pairs, statistics, opening splits
-    Eval2←{⍺←0 ⋄ m o←Sides ⍵ ⋄ 6400⌊¯6400⌈(100×(+/m)-+/o)+(m-o)+.×,weights2} ⍝ frozen phase-2 baseline (oracle eval_phase2): discs×100 + table weights2; ⍺ (move counts) ignored
+    Eval2←{⍺←0 ⋄ d←⊃-/Sides ⍵ ⋄ 6400⌊¯6400⌈(100×+/d)+d+.×,weights2} ⍝ frozen phase-2 baseline (oracle eval_phase2): discs×100 + table weights2; ⍺ (move counts) ignored
     RA←{b←1⊃⍵ ⋄ s←⍸Moves b ⋄ ⎕RL←1+2147483646|⍺⍺+Key b ⋄ s[?≢s]} ⍝ agent (seed RA): random move, reproducible from seed and position
     Greedy←{b←1⊃⍵ ⋄ s←⍸Moves b ⋄ s[⊃⍒+/(s Play(≢s)2 64⍴b)[;1;]]} ⍝ agent: most discs after the move, lowest square on ties
     P2←{tab←(New 16)⎕VSET⊂'base' 1 ⋄ 1⊃(tab,⍨Wide ⍺⍺)Search 1⊃⍵} ⍝ agent (d P2): current search to depth d with the frozen Eval2, fresh table each move
@@ -237,6 +237,7 @@
         G←{f←⍵ ⋄ R←{s←⍸Moves 1⊃⍵ ⋄ s[⌊(≢s)×f[+/,1⊃⍵]]} ⋄ ⍺:0<Result((2 AB)Game R)0 start ⋄ 0>Result(R Game(2 AB))0 start}
         8≤+/(10↑5⍴1)G¨↓r
     }
+    TestEval2←{¯1024 728 ¯1029 535 ¯832 338 ¯634 ¯255≡Eval2↑8↑Corp 0} ⍝ the frozen baseline stays frozen (snapshot)
     TestFixtures←{ ⍝ oracle tests/perft.rs fixtures and WTHOR scoring
         p←9 Bd 0 2                  ⍝ side to move must pass; opponent has two replies
         t←0 2 4 6 Bd 1 3 5 7        ⍝ early terminal, tied
