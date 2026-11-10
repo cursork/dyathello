@@ -82,6 +82,13 @@ Games.(Show(Human _Game_ Rnd)0 eng.start)
 
 Run `Tests.RunTests 0` for the tests, `./tools/match.apls` for a headless match, and `./ui/othello.apls` for the graphical front end.
 
+The front end needs [raylibAPL](https://github.com/Brian-ED/raylibAPL) and its native library in `vendor/` (gitignored). Set it up once from the project root:
+
+```bash
+git clone --depth 1 https://github.com/Brian-ED/raylibAPL vendor/raylibAPL
+(cd vendor/raylibAPL && dyalogscript install-raylib.apls)   # downloads the raylib binary into vendor/raylibAPL/lib/
+```
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
