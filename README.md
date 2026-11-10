@@ -13,7 +13,13 @@ An [Othello](https://en.wikipedia.org/wiki/Reversi) engine written in Dyalog APL
 | `src/Harness.apln` | Match harness: opening sets, colour-swapped pairs, statistics |
 | `src/Tests.apln` | Tests, a naive reference implementation, benchmarks |
 | `src/data.dcf` | Component file with opening sets and test positions |
-| `ui/othello.apls` | A [raylibAPL](https://github.com/Brian-ED/raylibAPL) front end |
+| `ui/App.apln` | The [raylib](https://www.raylib.com) front end: `App.Run rl` plays games in a window drawn through `rl` |
+| `ui/othello.apls` | Runs `App` on the desktop with [raylibAPL](https://github.com/Brian-ED/raylibAPL) |
+| `web/Remote.aplc` | A stand-in for raylibAPL that draws in a browser over a WebSocket |
+| `web/Server.aplc` | Web server: serves the browser client and plays `App` with each browser that connects |
+| `web/client/main.c` | Browser client: raylib compiled to WebAssembly, drawing what APL sends |
+| `web/serve.apls`, `web/test.apls` | Run the web server; run the web tests (`web/WebTests.apln`) |
+| `Dockerfile` | Builds the browser client and an image that serves the web version |
 
 ## Board representation
 
@@ -87,6 +93,32 @@ The front end needs [raylibAPL](https://github.com/Brian-ED/raylibAPL) and its n
 ```bash
 git clone --depth 1 https://github.com/Brian-ED/raylibAPL vendor/raylibAPL
 (cd vendor/raylibAPL && dyalogscript install-raylib.apls)   # downloads the raylib binary into vendor/raylibAPL/lib/
+```
+
+## On the web
+
+The same front end runs in a browser. raylib itself cannot run there under APL, since raylibAPL calls the native library from the interpreter, so the work is split: raylib compiled to WebAssembly draws in the browser, and everything else stays in APL on the server.
+
+- `App.Run` is given `Remote` in place of raylibAPL. `Remote` has the same functions; between `BeginDrawing` and `EndDrawing` it collects each draw call as a line of text, and `EndDrawing` sends the frame over a WebSocket.
+- The browser client replays the latest frame on every browser frame, and answers each frame it receives with the input collected since the previous one: mouse position, buttons and keys pressed. That answer is what the next frame's `GetMousePosition`, `IsKeyPressed` and `IsMouseButtonPressed` read.
+- `MeasureText` is computed in APL from the widths of the default font's glyphs, which the client sends once on connecting, so that centring text needs no round trip.
+- `Server` is an instance with its own [Conga](https://docs.dyalog.com/latest/Conga%20User%20Guide.pdf) root: it serves `web/static/` over HTTP and starts a thread running `App.Run` for each WebSocket. Game state is local to `App.Run`, so the games are independent. Several servers can run in one process; a fault leaves `State` at `failed` with a message in `Error` rather than ending the interpreter.
+
+The protocol is described at the top of `web/Remote.aplc`.
+
+To run it in Docker:
+
+```bash
+docker build -t apl-othello .
+docker run --rm -t -p 8080:8080 apl-othello      # then open http://localhost:8080
+```
+
+To run it from the project root instead, build the browser client into `web/static/` (Docker is still used, for Emscripten), then start the server. raylibAPL must be in `vendor/` as above, for raylib's key codes; its native library is not needed.
+
+```bash
+docker build --target client-files -o web/static .
+./web/serve.apls 8080
+./web/test.apls          # web tests: Conga clients stand in for browsers
 ```
 
 ## License

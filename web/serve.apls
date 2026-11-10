@@ -1,0 +1,14 @@
+#!/usr/local/bin/dyalogscript
+⍝ APL Othello on the web: serves web/static and plays ui/App.apln with each browser that connects (web/Server.aplc).
+⍝ Run from the project root: ./web/serve.apls [port]   (default 8080). Build web/static/client.* first: see README.
+⎕IO←0
+root←⊃1⎕NPARTS''
+z←{2⎕FIX'file://',root,⍵}¨'src/Othello.apln' 'src/Games.apln' 'ui/App.apln' 'web/Remote.aplc' 'web/Server.aplc'
+rl←0⎕FIX'file://',root,'vendor/raylibAPL/link/raylib.apln'      ⍝ for raylib's key and button codes; no native library is loaded
+a←2⎕NQ'.' 'GetCommandLineArgs'
+port←{0=≢⍵:8080 ⋄ ⊃⊃(//)⎕VFI⊃⌽⍵}a/⍨∧/¨a∊¨⊂⎕D
+s←⎕NEW #.Server(port(root,'web/static/')#.App rl)
+s.Start
+⎕←'APL Othello: ',s.State,' on port ',⍕s.Port
+:While s.State≡'running' ⋄ ⎕DL 1 ⋄ :EndWhile
+⎕←'APL Othello: ',s.State,' ',s.Error

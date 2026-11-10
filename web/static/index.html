@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>APL Othello</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #1c2026; }
+  body { display: flex; align-items: center; justify-content: center; }
+  canvas { display: block; outline: none; }
+</style>
+</head>
+<body>
+<!-- raylib (web/client) draws here; every frame comes from APL over a WebSocket -->
+<canvas id="canvas" tabindex="0" oncontextmenu="event.preventDefault()"></canvas>
+<script>
+  var Module = { canvas: document.getElementById('canvas') };
+  Module.canvas.focus();
+</script>
+<script src="client.js"></script>
+</body>
+</html>

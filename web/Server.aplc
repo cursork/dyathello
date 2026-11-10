@@ -1,0 +1,136 @@
+:Class Server
+⍝ APL Othello on the web: serves the browser client from a folder and plays a game in each browser that connects,
+⍝ every game in this process, each in its own thread. Each instance has its own Conga root, so several can run at once.
+⍝   s←⎕NEW Server(port folder app rl)   port 0 picks a free port; app has Run (ui/App.apln); rl supplies the enums (raylibAPL)
+⍝   s.Start ⋄ … ⋄ s.Stop                faults leave State 'failed' and a message in Error rather than stopping the interpreter
+    ⎕IO←0
+
+    :Field Public Port
+    :Field Public Folder
+    :Field Public MaxGames←8          ⍝ browsers beyond this are told the server is busy
+    :Field Public State←'stopped'     ⍝ stopped, running or failed
+    :Field Public Error←''
+    :Field Public Games←⍬             ⍝ Remote instances, one per browser
+
+    :Field app
+    :Field rl
+    :Field lib
+    :Field srv←''
+    :Field conns←⍬                    ⍝ Conga connection names of Games
+    :Field threads←⍬                  ⍝ threads playing Games, and some that have finished
+    :Field loop←¯1
+    :Field stop←0
+
+    types←↑('.html' 'text/html; charset=utf-8')('.js' 'text/javascript')('.wasm' 'application/wasm')('.css' 'text/css')('.png' 'image/png')('.ico' 'image/x-icon')
+
+    ∇ Make(p f a r)
+      :Access Public
+      :Implements Constructor
+      (Port Folder app rl)←p f a r
+      Folder,←'/'↓⍨'/'=⊃⌽Folder
+      :If 9≠#.⎕NC'Conga' ⋄ 'Conga'#.⎕CY'conga' ⋄ :EndIf
+      lib←#.Conga.New''                           ⍝ this instance's own Conga root
+    ∇
+
+    ∇ Start;rc;r
+      :Access Public
+      →('running'≡State)⍴0
+      stop←0 ⋄ Error←''
+      (rc srv)←2↑r←lib.Srv'' ''Port'http'('Options'(lib.Options.(DecodeHttp+WSAutoUpgrade)))
+      :If 0≠rc ⋄ Fail'Cannot listen on port ',(⍕Port),': ',⍕r ⋄ →0 ⋄ :EndIf
+      Port←⊃⌽1⊃lib.GetProp srv'LocalAddr'      ⍝ 0 (family address ip port)
+      State←'running'
+      loop←Loop&0
+    ∇
+
+    ∇ Stop
+      :Access Public
+      →(srv≡'')⍴0                                 ⍝ never started
+      stop←1 ⋄ ⎕TSYNC loop~⎕TID
+      :If 0<≢Games ⋄ Games.Disconnect ⋄ :EndIf
+      ⎕TSYNC threads∩⎕TNUMS~⎕TID
+      {}lib.Close srv
+      State←'stopped'
+    ∇
+
+    ∇ Fail msg
+      State←'failed' ⋄ Error←msg
+      {}lib.Close srv
+    ∇
+
+    ∇ Loop x;rc;obj;evt;data
+      :Trap 0
+          :While ~stop
+              (rc obj evt data)←4↑lib.Wait srv 250
+              :Select evt
+              :CaseList 'Timeout' 'Connect'
+              :Case 'HTTPHeader' ⋄ Serve obj data
+              :Case 'WSUpgrade' ⋄ Open obj
+              :Case 'WSReceive' ⋄ Receive obj data
+              :Else
+                  :If (⊂obj)∊conns ⋄ Close obj                ⍝ the browser has gone
+                  :ElseIf (srv≡obj)∧evt≡'Closed' ⋄ Fail'Server closed: ',⍕rc data ⋄ :Return
+                  :Else ⋄ ⎕←'Server: ignored ',⍕rc obj evt
+                  :EndIf
+              :EndSelect
+          :EndWhile
+      :Else
+          Fail⊃⎕DMX.DM
+      :EndTrap
+    ∇
+
+    ∇ Serve(obj data);path;name;ext;i;body;head;n;t
+    ⍝ answer an HTTP request with a file directly in Folder
+      path←{⍵↑⍨⍵⍳'?'}1⊃data
+      name←{0=≢⍵:'index.html' ⋄ ⍵}1↓path
+      (n t)←0 1(⎕NINFO⍠1)Folder,'*'
+      :If ('GET'≢0⊃data)∨~(⊂name)∊{∊1↓⎕NPARTS ⍵}¨n/⍨t=2
+          head←'404 Not Found' 'text/plain' ⋄ body←⎕UCS'not found'
+      :Else
+          ext←2⊃⎕NPARTS name ⋄ i←types[;0]⍳⊂ext
+          head←'200 OK'(i⊃types[;1],⊂'application/octet-stream')
+          body←256|⎕NREAD(t←(Folder,name)⎕NTIE 0)83 ¯1 ⋄ ⎕NUNTIE t
+      :EndIf
+      head←'HTTP/1.1 ',(0⊃head),CRLF,'Content-Type: ',(1⊃head),CRLF,'Content-Length: ',(⍕≢body),CRLF,'Cache-Control: no-cache',CRLF,'Connection: close',CRLF,CRLF
+      {}lib.Send obj((⎕UCS head),body)1
+    ∇
+    CRLF←⎕UCS 13 10
+
+    ∇ Open obj;r
+    ⍝ a browser has opened a WebSocket: play a game with it
+      :If MaxGames≤≢Games
+          {}lib.Send obj('W 800 800 APL Othello' 1)
+          {}lib.Send obj((∊'F' 'C 28 32 38 255' 'T 250 380 30 226 229 233 255 Server busy, try later',¨⎕UCS 10)1)
+          {}lib.Send obj('Q' 1)1 ⋄ →0
+      :EndIf
+      r←⎕NEW #.Remote(lib obj rl)
+      Games,←r ⋄ conns,←⊂obj
+      threads←(threads∩⎕TNUMS),Play&r
+    ∇
+
+    ∇ Receive(obj data);i
+      i←conns⍳⊂obj ⋄ →(i=≢conns)⍴0
+      (i⊃Games).Receive 2↑data
+    ∇
+
+    ∇ Play r;obj
+    ⍝ thread: one game, until the browser closes it or goes. Closing the window closes the connection.
+      obj←(Games⍳r)⊃conns,⊂''
+      :Trap 0 ⋄ app.Run r ⋄ Drop obj
+      :Else ⋄ ⎕←'game failed: ',⊃⎕DMX.DM ⋄ Close obj
+      :EndTrap
+    ∇
+
+    ∇ Drop obj;i
+    ⍝ forget a game
+      i←conns⍳⊂obj ⋄ →(i=≢conns)⍴0
+      (i⊃Games).Disconnect
+      (Games conns)←(Games conns)/⍨¨⊂i≠⍳≢conns
+    ∇
+
+    ∇ Close obj
+    ⍝ forget a game and close its connection
+      Drop obj ⋄ {}lib.Close obj
+    ∇
+
+:EndClass

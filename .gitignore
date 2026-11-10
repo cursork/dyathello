@@ -1,3 +1,6 @@
 # third-party checkouts and their native binaries (raylibAPL: https://github.com/Brian-ED/raylibAPL)
 vendor/
 .DS_Store
+# the WebAssembly client, built by the Dockerfile (docker build --target client-files -o web/static .)
+web/static/client.js
+web/static/client.wasm

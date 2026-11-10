@@ -1,0 +1,9 @@
+#!/usr/local/bin/dyalogscript
+⍝ Tests of the web front end (web/WebTests.apln). Run from the project root: ./web/test.apls
+⍝ Prints the names of failing tests, or "web tests pass". Needs web/static/client.* only for TestStatic.
+⎕IO←0
+root←⊃1⎕NPARTS''
+'Conga'#.⎕CY'conga'
+z←{2⎕FIX'file://',root,⍵}¨'src/Othello.apln' 'src/Games.apln' 'ui/App.apln' 'web/Remote.aplc' 'web/Server.aplc' 'web/WebTests.apln'
+f←#.WebTests.RunTests 0
+⎕←(0=≢f)⊃('failing: ',⍕f)'web tests pass'

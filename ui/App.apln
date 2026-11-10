@@ -1,0 +1,127 @@
+:Namespace App
+⍝ The raylib front end to the engine in src/Othello.apln. Run rl plays games in a window drawn through rl:
+⍝ raylibAPL itself (ui/othello.apls) or anything with the same functions, such as a browser (web/Remote.aplc).
+⍝ All game state is local to Run, so several games can run at once, one per thread.
+⍝ Click to move. N new game, U undo, S swap sides, H hints, + / - engine time, Esc quit.
+    ⎕IO←0
+    eng←#.Othello
+    gm←#.Games
+
+    ⍝ layout (pixels) and palette (RGBA)
+    size←76 ⋄ width←height←800 ⋄ x0←⌊(width-8×size)÷2 ⋄ y0←112                      ⍝ square window: header, board, file labels, key help
+    bg←28 32 38 255 ⋄ frame←12 74 48 255 ⋄ felt←18 124 80 255 ⋄ grid←10 86 54 255
+    blk←24 24 26 255 ⋄ wht←240 240 234 255 ⋄ shade←0 0 0 70 ⋄ hint←255 255 255 60
+    mark←236 92 72 255 ⋄ txt←226 229 233 255 ⋄ dim←140 148 158 255 ⋄ gold←246 196 82 255
+
+    Cell←{(r f)←8 8⊤⍵ ⋄ ⌊(x0+size×f+0.5),y0+size×7.5-r}                          ⍝ pixel centre of square ⍵
+    Under←{(x y)←⌊(⍵-x0 y0)÷size ⋄ (x∊⍳8)∧y∊⍳8:8⊥(7-y)x ⋄ ¯1}                 ⍝ square under pixel ⍵, or ¯1
+    Disc←{(x y)←Cell ⍺ ⋄ r←⌊size×0.4 ⋄ z←rl.DrawCircle(x+3)(y+4)r shade ⋄ rl.DrawCircle x y r ⍵}
+    Text←{(x y s c)←⍺ ⋄ rl.DrawText ⍵ x y s c}
+    Mid←{(s y c)←⍺ ⋄ ((⌊(width-rl.MeasureText ⍵ s)÷2)y s c)Text ⍵}               ⍝ centred text
+    Pawn←{(x y c n)←⍵ ⋄ z←rl.DrawCircle x y 15 c ⋄ z←rl.DrawCircleLines x y 15 dim ⋄ ((x+26)(y-13)28 txt)Text⍕n}
+    Who←{⍵⊃'Black' 'White'}
+    Num←{((⍵<0)⊃'+-'),2⍕|⍵÷100}                                          ⍝ centidiscs as signed discs
+
+    Final←{ ⍝ finished game ⍵ → 'White wins 60-3' (WTHOR margin noted when empty squares count)
+        (c b)←⍵ ⋄ n←+/⊖⍣c⊢b ⋄ m←gm.Result ⍵ ⋄ t←(⍕⌈/n),'-',⍕⌊/n
+        m=0:'a draw, ',t
+        w←(Who m<0),' wins ',t ⋄ (|m)=|-/n:w ⋄ w,' (',(⍕|m),' with the empty squares)'
+    }
+
+    Board←{
+        z←rl.DrawRectangle(x0-12)(y0-12)(24+8×size)(24+8×size)frame
+        z←rl.DrawRectangle x0 y0(8×size)(8×size)felt
+        z←{rl.DrawLine(x0+size×⍵)y0(x0+size×⍵)(y0+8×size)grid}¨⍳9
+        z←{rl.DrawLine x0(y0+size×⍵)(x0+8×size)(y0+size×⍵)grid}¨⍳9
+        z←{rl.DrawCircle(x0+size×⊃⍵)(y0+size×1⊃⍵)5 grid}¨2 6∘.,2 6
+        z←{((⌊x0+size×⍵+0.42)(y0+18+8×size)20 dim)Text,⍵⊃'abcdefgh'}¨⍳8
+        z←{((x0-36)(⌊y0+size×⍵+0.38)20 dim)Text ⍕8-⍵}¨⍳8
+        0
+    }
+
+    Status←{ ⍝ game ⍵ → headline
+        (c b)←⍵
+        eng.Terminal b:Final ⍵
+        ~∨/eng.Moves b:(Who c),' has no move and passes'
+        c≠hc:'Engine is thinking...'
+        'Your move (',(Who c),')'
+    }
+
+    Info←{ ⍝ last engine search result ⍵ → one line
+        0=≢⍵:'Engine plays ',(Who~hc),', ',(⍕ms÷1000),' s per move'
+        (s v d n st so)←⍵
+        so:'Engine played ',(gm.Name s),': solved, ',{⍵=0:'draws' ⋄ ((⍵>0)⊃'loses' 'wins'),' by ',⍕|⍵÷100}v
+        'Engine played ',(gm.Name s),': depth ',(⍕d),', eval ',(Num v),', ',(⍕n),' nodes'
+    }
+
+    ∇ Run rl;game;hist;hc;ms;hints;lm;last;job;pc;out;Stop;keys;lmb;c;b;mv;over;sq;k;x;y;z
+    ⍝ Play in the window drawn through rl until it is closed
+      game←0 eng.start ⋄ hist←⍬ ⋄ hc←0 ⋄ ms←3000 ⋄ hints←1 ⋄ lm←¯1 ⋄ last←⍬ ⋄ job←¯1 ⋄ pc←0 ⋄ out←⎕NS ⍬ ⍝ out: where the search thread leaves its result
+      Stop←{job≥0:¯1⊣⎕TKILL job ⋄ ¯1}                                          ⍝ abandon the engine's search thread
+      keys←rl.KeyboardKey ⋄ lmb←rl.MouseButton.MOUSE_BUTTON_LEFT
+
+      rl.InitWindow width height'APL Othello'
+      rl.SetTargetFPS 0                                ⍝ pace frames with ⎕DL instead: it lets the search thread run
+      ⎕←'window ',(⍕width height),' screen ',(⍕rl.GetScreenWidth ⍬),' ',(⍕rl.GetScreenHeight ⍬),' render ',(⍕rl.GetRenderWidth ⍬),' ',⍕rl.GetRenderHeight ⍬
+      :While ~rl.WindowShouldClose ⍬
+          (c b)←game ⋄ mv←⍸eng.Moves b ⋄ over←eng.Terminal b ⋄ sq←Under rl.GetMousePosition ⍬
+
+          ⍝ input
+          :If rl.IsKeyPressed keys.KEY_N ⋄ job←Stop 0 ⋄ game←0 eng.start ⋄ hist←⍬ ⋄ lm←¯1 ⋄ last←⍬ ⋄ :Continue ⋄ :EndIf
+          :If rl.IsKeyPressed keys.KEY_H ⋄ hints←~hints ⋄ :EndIf
+          :If rl.IsKeyPressed keys.KEY_S ⋄ job←Stop 0 ⋄ hc←~hc ⋄ :EndIf
+          :If rl.IsKeyPressed keys.KEY_EQUAL ⋄ ms←16000⌊ms×2 ⋄ :EndIf
+          :If rl.IsKeyPressed keys.KEY_MINUS ⋄ ms←250⌈ms÷2 ⋄ :EndIf
+          :If (rl.IsKeyPressed keys.KEY_U)∧0<≢hist
+              job←Stop 0
+              :Repeat ⋄ (game lm)←⊃⌽hist ⋄ hist←¯1↓hist ⋄ :Until (hc=⊃game)∨0=≢hist
+              last←⍬ ⋄ :Continue
+          :EndIf
+
+          ⍝ play
+          :If ~over
+              :If 0=≢mv                                 ⍝ forced pass: show it for a moment
+                  pc+←1
+                  :If pc>60 ⋄ hist,←⊂game lm ⋄ game←(~c)(⊖b) ⋄ pc←0 ⋄ :EndIf
+              :ElseIf c=hc
+                  :If (rl.IsMouseButtonPressed lmb)∧sq∊mv
+                      hist,←⊂game lm ⋄ game←(~c)(sq eng.Play b) ⋄ lm←sq
+                  :EndIf
+              :ElseIf job<0                             ⍝ engine to move: search in a thread so the window stays live
+                  job←(ms out){(m o)←⍺ ⋄ o.r←m eng.Think ⍵}&b
+              :ElseIf ~job∊⎕TNUMS                       ⍝ search finished: play its move
+                  last←out.r ⋄ job←¯1 ⋄ ⎕←last
+                  hist,←⊂game lm ⋄ lm←⊃last ⋄ game←(~c)(lm eng.Play b)
+              :EndIf
+          :EndIf
+
+          ⍝ draw
+          (c b)←game ⋄ mv←⍸eng.Moves b ⋄ k←⊖⍣c⊢b
+          rl.BeginDrawing ⍬
+          rl.ClearBackground bg
+          z←Pawn 44 46 blk(+/k[0;]) ⋄ z←Pawn(width-112)46 wht(+/k[1;])               ⍝ header: counts at the sides,
+          :If ~eng.Terminal b ⋄ z←rl.DrawRectangle(c⊃24(width-132))70 100 4 gold ⋄ :EndIf  ⍝ side-to-move bar,
+          z←(22 26((eng.Terminal b)⊃txt gold))Mid Status game                          ⍝ status and engine line between
+          z←(16 62 dim)Mid Info last
+          z←Board 0
+          z←{⍵ Disc blk}¨⍸k[0;] ⋄ z←{⍵ Disc wht}¨⍸k[1;]
+          :If (c=hc)∧~eng.Terminal b
+              :If hints ⋄ z←{(x y)←Cell ⍵ ⋄ rl.DrawCircle x y 7 hint}¨mv ⋄ :EndIf
+              :If sq∊mv ⋄ z←sq Disc(3↑c⊃blk wht),110 ⋄ :EndIf
+          :EndIf
+          :If lm≥0 ⋄ (x y)←Cell lm ⋄ z←rl.DrawCircle x y 6 mark ⋄ :EndIf
+          :If eng.Terminal b                              ⍝ game-over banner across the board
+              z←rl.DrawRectangle x0(y0+3×size)(8×size)(2×size)(16 18 22 215)
+              z←(40(⌊y0+size×3.35)gold)Mid'Game over'
+              z←(24(⌊y0+size×4.15)txt)Mid Final game
+              z←(16(⌊y0+size×4.6)dim)Mid'press N for a new game'
+          :EndIf
+          z←(15(height-30)dim)Mid'click: move   N new   U undo   S swap sides   H hints   +/- engine time   Esc quit'
+          rl.EndDrawing ⍬
+          ⎕DL 1÷60                                       ⍝ about 60 frames a second; the search runs meanwhile
+      :EndWhile
+      job←Stop 0
+      rl.CloseWindow ⍬
+    ∇
+
+:EndNamespace

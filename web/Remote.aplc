@@ -1,0 +1,185 @@
+:Class Remote
+⍝ raylib in a browser: the raylibAPL functions that ui/App.apln uses, for one browser connected over a WebSocket.
+⍝ The browser runs web/client, raylib compiled to WebAssembly, which only draws what it is sent and reports input.
+⍝ Messages are lines of text. To the browser:
+⍝   W width height title          InitWindow
+⍝   F, then one line per call     a frame: C clear, R rectangle, O circle, o circle outline, L line, T text
+⍝   Q                             CloseWindow
+⍝ From the browser:
+⍝   H w32 … w255                  hello: widths of the default font's glyphs for ⎕UCS 32…255, so MeasureText is computed here
+⍝   I mx my sw sh rw rh|b…|k…     input since the last report: mouse, screen and render sizes, buttons and keys pressed
+⍝ The browser answers each frame with one input report, so EndDrawing waits for the input that the next frame reads.
+    ⎕IO←0
+
+    :Field Public KeyboardKey      ⍝ raylibAPL's enums, so key and button codes are raylib's
+    :Field Public MouseButton
+    :Field Public Connected←1
+    :Field Public Wait←30          ⍝ seconds to wait for the browser before treating it as gone
+
+    :Field lib                     ⍝ Conga root and connection the browser is on
+    :Field con
+    :Field tok←0                   ⍝ token the session thread waits on for messages
+    :Field inbox←⍬                 ⍝ messages received but not yet read
+    :Field part←''                 ⍝ a message whose final fragment has not arrived
+    :Field glyphs←⍬
+    :Field frame←⍬                 ⍝ lines of the frame being drawn
+    :Field input                   ⍝ the latest input report
+
+    ∇ Make(l c rl)
+      :Access Public
+      :Implements Constructor
+      (lib con)←l c
+      KeyboardKey←rl.KeyboardKey ⋄ MouseButton←rl.MouseButton
+      input←⎕NS ⍬ ⋄ input.(mouse size render buttons keys)←(0 0)(0 0)(0 0)⍬ ⍬
+    ∇
+
+⍝ Connection, called by web/Server.aplc from its own thread
+
+    ∇ Receive(data fin)
+      :Access Public
+      part,←data ⋄ →fin↓0
+      inbox,←⊂part ⋄ part←''
+      ⎕TPUT tok
+    ∇
+
+    ∇ Disconnect
+      :Access Public
+      Connected←0
+      ⎕TPUT tok
+    ∇
+
+    ∇ r←Next;t
+    ⍝ the next message from the browser, or '' once it has gone
+      :While Connected∧0=≢inbox
+          :If 0=≢Wait ⎕TGET tok ⋄ Connected←0 ⋄ :EndIf
+      :EndWhile
+      →(0=≢inbox)⍴0⊣r←''
+      (r inbox)←(⊃inbox)(1↓inbox)                ⍝ one statement: the server thread appends to inbox
+    ∇
+
+    Send←{Connected:0⊣lib.Send con(⍵ 1) ⋄ 0}
+    Fmt←{'-'@('¯'∘=)⍕⍵}                          ⍝ numbers as C reads them
+    Line←{frame,←⊂⍺,' ',Fmt ⍵ ⋄ 0}
+    Nums←{⊃(//)⎕VFI ⍵}
+
+    ∇ Read msg;b;k;n
+    ⍝ take an input report
+      →('I'≠⊃msg)⍴0
+      (n b k)←Nums¨1↓¨{(⍵='|')⊂⍵}'|',1↓msg
+      input.(mouse size render)←↓3 2⍴n ⋄ input.(buttons keys)←b k
+    ∇
+
+⍝ Window
+
+    ∇ InitWindow(w h title);msg
+      :Access Public
+      tok←⎕TID
+      Send'W ',(Fmt w h),' ',title
+      :Repeat ⋄ msg←Next ⋄ :Until (0=≢msg)∨'H'=⊃msg
+      glyphs←Nums 1↓msg
+      Read Next                                   ⍝ the browser follows its hello with a first input report
+    ∇
+
+    ∇ CloseWindow x
+      :Access Public
+      →Connected↓0 ⋄ {}lib.Send con('Q' 1)1               ⍝ close the connection once Q has gone
+    ∇
+
+    ∇ SetTargetFPS x
+      :Access Public
+    ∇
+
+    ∇ r←WindowShouldClose x
+      :Access Public
+      r←(~Connected)∨KeyboardKey.KEY_ESCAPE∊input.keys
+    ∇
+
+    ∇ r←GetScreenWidth x
+      :Access Public
+      r←⊃input.size
+    ∇
+
+    ∇ r←GetScreenHeight x
+      :Access Public
+      r←1⊃input.size
+    ∇
+
+    ∇ r←GetRenderWidth x
+      :Access Public
+      r←⊃input.render
+    ∇
+
+    ∇ r←GetRenderHeight x
+      :Access Public
+      r←1⊃input.render
+    ∇
+
+⍝ Input
+
+    ∇ r←GetMousePosition x
+      :Access Public
+      r←input.mouse
+    ∇
+
+    ∇ r←IsKeyPressed k
+      :Access Public
+      r←k∊input.keys
+    ∇
+
+    ∇ r←IsMouseButtonPressed b
+      :Access Public
+      r←b∊input.buttons
+    ∇
+
+⍝ Drawing
+
+    ∇ BeginDrawing x
+      :Access Public
+      frame←,⊂'F'
+    ∇
+
+    ∇ EndDrawing x
+      :Access Public
+      Send¯1↓∊frame,¨⎕UCS 10
+      Read Next
+    ∇
+
+    ∇ r←ClearBackground c
+      :Access Public
+      r←'C'Line c
+    ∇
+
+    ∇ r←DrawRectangle(x y w h c)
+      :Access Public
+      r←'R'Line x y w h,c
+    ∇
+
+    ∇ r←DrawCircle(x y rad c)
+      :Access Public
+      r←'O'Line x y rad,c
+    ∇
+
+    ∇ r←DrawCircleLines(x y rad c)
+      :Access Public
+      r←'o'Line x y rad,c
+    ∇
+
+    ∇ r←DrawLine(x0 y0 x1 y1 c)
+      :Access Public
+      r←'L'Line x0 y0 x1 y1,c
+    ∇
+
+    ∇ r←DrawText(t x y s c)
+      :Access Public
+      frame,←⊂'T ',(Fmt x y s,c),' ',' '@(∊∘(⎕UCS 10 13))⍕t ⋄ r←0
+    ∇
+
+    ∇ r←MeasureText(t s);n;sp
+      :Access Public
+    ⍝ raylib's MeasureText with the default font: glyph widths scaled from its base size 10, plus spacing size÷10 between glyphs
+      t←,⍕t ⋄ n←(⎕UCS t)-32 ⋄ n[⍸~n∊⍳≢glyphs]←31   ⍝ glyphs the font lacks are drawn as '?'
+      s←10⌈s ⋄ sp←⌊s÷10
+      r←⌊((s÷10)×+/glyphs[n])+sp×0⌈¯1+≢t
+    ∇
+
+:EndClass

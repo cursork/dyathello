@@ -1,0 +1,144 @@
+:Namespace WebTests
+⍝ Tests of the web front end, all in this process: a Server plays ui/App.apln with Conga WebSocket clients
+⍝ that speak the browser's side of the protocol (web/Remote.aplc). Run with ./web/test.apls.
+⍝ RunTests 0 → names of failing Test* functions (none = pass).
+    ⎕IO←0
+    RunTests←{t←{⍵/⍨(⊂'Test')≡¨4↑¨⍵}⎕NL ¯3 ⋄ t/⍨~{⍎⍵,' 0'}¨t}
+
+    root←⊃1⎕NPARTS(⊃1⎕NPARTS 3⊃5179⌶⍕⎕THIS),'..'
+    rl←0⎕FIX'file://',root,'vendor/raylibAPL/link/raylib.apln'          ⍝ raylib's enums
+    static←root,'web/static/'
+
+    ⍝ widths of raylib's default font for ⎕UCS 32…126, and MeasureText of some strings at sizes 5 10 15 16 22 24 40, both from native raylib
+    glyphs←3 1 4 6 5 7 6 2 3 3 5 5 2 4 1 7 5 2 5 5 5 5 5 5 5 5 1 1 3 4 3 6 7 6 6 6 6 6 6 6 6 3 5 6 5 7 6 6 6 6 6 6 7 6 7 7 6 6 6 2 7 2 3 5 2 5 5 5 5 5 4 5 5 1 2 5 2 5 5 5 5 5 5 5 4 5 5 5 5 5 5 3 1 3 4
+    sizes←5 10 15 16 22 24 40
+    widths←⍬
+    widths,←⊂'Your move (Black)'(92 92 130 137 199 214 368)
+    widths,←⊂'Engine plays White, 3 s per move'(167 167 235 248 361 388 668)
+    widths,←⊂'click: move   N new   U undo   S swap sides   H hints   +/- engine time   Esc quit'(409 409 573 605 883 949 1636)
+    widths,←⊂'Game over'(52 52 74 78 112 121 208)
+    widths,←⊂'a'(5 5 7 8 11 12 20)
+    widths,←⊂''(0 0 0 0 0 0 0)
+
+    Hello←'H',∊' ',¨⍕¨glyphs
+    Idle←'I 0 0 800 800 800 800||'
+    Input←{(x y b k)←⍵ ⋄ 'I ',(⍕x y),' 800 800 800 800|',(⍕b),'|',⍕k}
+    Fmt←{'-'@('¯'∘=)⍕⍵}
+    Has←{∨/((⎕UCS 10),⍺,⎕UCS 10)⍷⍵,⎕UCS 10}                          ⍝ frame ⍵ has line ⍺
+    Disc←{(x y)←#.App.Cell ⍺ ⋄ 'O ',Fmt x y 30,⍵}                         ⍝ the line drawing a disc of colour ⍵ on square ⍺
+
+⍝ A stand-in browser
+
+    Connect←{ ⍝ port → client: Conga root and connection, upgraded to a WebSocket
+        l←#.Conga.New''
+        (rc c)←2↑l.Clt'' 'localhost'⍵'http'('Options'l.Options.WSAutoUpgrade)
+        rc≠0:l''
+        z←l.SetProp c'WSUpgrade'('/ws' 'localhost' '')
+        e←{2⊃4↑l.Wait c 5000}⍣{⍺≢'Connect'}⍬                       ⍝ past the Connect event, if any
+        e≡'WSUpgrade':l c
+        l''
+    }
+    Recv←{(l c)←⍵ ⋄ (rc o e d)←4↑l.Wait c 5000 ⋄ e≡'WSReceive':0⊃d ⋄ ''}  ⍝ next message, or '' if none comes
+    Say←{(l c)←⍺ ⋄ 0=⊃l.Send c(⍵ 1)}
+    Bye←{(l c)←⍵ ⋄ 0=⊃l.Close c}
+
+    ∇ ok←c(Pred Await)inp;t;m
+    ⍝ answer frames, the first with input inp and the rest idle, until one satisfies Pred (or 20 s pass)
+      ok←0 ⋄ t←20000+3⊃⎕AI
+      :While (~ok)∧t>3⊃⎕AI
+          m←Recv c
+          :If 'F'≡⊃m ⋄ ok←Pred m ⋄ {}c Say inp ⋄ inp←Idle
+          :ElseIf 0=≢m ⋄ :Return
+          :EndIf
+      :EndWhile
+    ∇
+
+    ∇ ok←Start c
+    ⍝ the browser's opening: InitWindow arrives, then hello and a first input report
+      ok←'W 800 800 APL Othello'≡Recv c
+      ok∧←c Say Hello
+      ok∧←c Say Idle
+    ∇
+
+    ∇ s←New x
+    ⍝ a started server on a free port
+      s←⎕NEW #.Server(0 static #.App rl) ⋄ s.Start
+    ∇
+
+⍝ Tests
+
+    ∇ r←TestMeasure x;lib;s;m
+    ⍝ MeasureText computed from the browser's glyph widths matches native raylib
+      lib←⎕NS'' ⋄ lib.Send←{0}
+      s←⎕NEW #.Remote(lib'c'rl)
+      s.Receive(Hello 1) ⋄ s.Receive(Idle 1)
+      s.InitWindow 800 800 'test'
+      m←{(t w)←⍵ ⋄ w≡t∘{s.MeasureText ⍺ ⍵}¨sizes}¨widths
+      r←∧/m
+    ∇
+
+    ∇ r←TestStatic x;s;l;c;Get
+    ⍝ the page and the client are served with their types; nothing outside the folder is
+      s←New 0 ⋄ l←#.Conga.New''
+      Get←{ ⍝ path → status and content type
+          (rc c)←2↑l.Clt'' 'localhost's.Port'http'('Options'l.Options.DecodeHttp)
+          z←l.Send c('GET ',⍵,' HTTP/1.1',(⎕UCS 13 10),'Host: localhost',⎕UCS 13 10 13 10)
+          (rc o e d)←4↑l.Wait c 5000 ⋄ z←l.Close c
+          h←3⊃d ⋄ (⍕1⊃d)(((⎕C h[;0])⍳⊂'content-type')⊃h[;1],⊂'')
+      }
+      r←('200' 'text/html; charset=utf-8')≡Get'/'
+      r∧←('200' 'application/wasm')≡Get'/client.wasm'
+      r∧←'404'≡⊃Get'/../README.md'
+      r∧←'404'≡⊃Get'/nope'
+      s.Stop
+    ∇
+
+    ∇ r←TestGame x;s;c;blk;d3
+    ⍝ a whole exchange: the first frame, a click on d3, the engine's reply, then Esc ends the game
+      s←New 0 ⋄ c←Connect s.Port ⋄ blk←24 24 26 255 ⋄ d3←8⊥2 3
+      r←Start c
+      r∧←c({∨/'Your move (Black)'⍷⍵}Await)Idle
+      r∧←c({(d3 Disc blk)Has ⍵}Await)Input(#.App.Cell d3),0 ⍬     ⍝ left button pressed over d3
+      r∧←c({∨/'Engine played'⍷⍵}Await)Idle
+      r∧←c({1}Await)Input 0 0 ⍬ rl.KeyboardKey.KEY_ESCAPE        ⍝ answer the next frame with Esc
+      r∧←(,'Q')≡Recv c
+      r∧←0=≢s.Games
+      {}Bye c ⋄ s.Stop ⋄ r∧←'stopped'≡s.State
+    ∇
+
+    ∇ r←TestGames x;s;t;a;b;blk;wht;d3
+    ⍝ two browsers on one server play separate games, and a second server runs alongside
+      s←New 0 ⋄ t←New 0 ⋄ blk←24 24 26 255 ⋄ d3←8⊥2 3
+      a←Connect s.Port ⋄ b←Connect s.Port
+      r←(Start a)∧Start b
+      r∧←(s.Port≠t.Port)∧∧/'running'∘≡¨s.State t.State
+      r∧←2=≢s.Games
+      r∧←a({(d3 Disc blk)Has ⍵}Await)Input(#.App.Cell d3),0 ⍬
+      r∧←b({~(d3 Disc blk)Has ⍵}Await)Idle                     ⍝ b's board is untouched
+      {}Bye¨a b ⋄ s.Stop ⋄ t.Stop
+      r∧←∧/'stopped'∘≡¨s.State t.State
+    ∇
+
+    ∇ r←TestBusy x;s;c;m
+    ⍝ beyond MaxGames a browser is told the server is busy, and the connection closes
+      s←New 0 ⋄ s.MaxGames←0 ⋄ c←Connect s.Port
+      r←''≢1⊃c
+      r∧←'W 800 800 APL Othello'≡Recv c
+      m←Recv c ⋄ r∧←∨/'Server busy'⍷m
+      r∧←(,'Q')≡Recv c
+      r∧←0=≢s.Games
+      s.Stop
+    ∇
+
+    ∇ r←TestGone x;s;c
+    ⍝ a browser that disappears mid-game ends its game; the server carries on
+      s←New 0 ⋄ c←Connect s.Port
+      r←Start c
+      r∧←c({1}Await)Idle
+      {}Bye c ⋄ ⎕DL 1
+      r∧←0=≢s.Games
+      r∧←'running'≡s.State
+      s.Stop
+    ∇
+
+:EndNamespace
